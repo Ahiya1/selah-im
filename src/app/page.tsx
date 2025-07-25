@@ -1,6 +1,5 @@
-// src/app/page.tsx - SELAH Main Landing Page - FIXED
-// Technology that breathes with you
-// The complete contemplative experience
+// src/app/page.tsx - SELAH Enhanced Landing Page
+// Technology that breathes with you - Complete transformation
 
 "use client";
 
@@ -12,11 +11,14 @@ export default function SelahHomePage(): JSX.Element {
   // Session tracking
   const [sessionData, setSessionData] = useState<EngagementData | null>(null);
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
+  const [currentChamber, setCurrentChamber] = useState<number>(0);
+  const [isVisible, setIsVisible] = useState<boolean>(true);
+  const [showFeedbackForm, setShowFeedbackForm] = useState<boolean>(false);
   const sessionStartTime = useRef<number>(Date.now());
   const maxScrollRef = useRef<number>(0);
   const timeTrackerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Initialize session on mount - FIXED: Remove sessionData from dependencies
+  // Initialize session on mount
   useEffect(() => {
     const metadata = generateSessionMetadata();
     const sessionId = metadata.sessionId;
@@ -54,7 +56,7 @@ export default function SelahHomePage(): JSX.Element {
       maxScrollRef.current = Math.max(maxScrollRef.current, scrollPercent);
     };
 
-    // Track time spent - FIXED: Use callback to avoid stale closure
+    // Track time spent
     const timeTracker = setInterval(() => {
       const timeSpent = Math.floor(
         (Date.now() - sessionStartTime.current) / 1000
@@ -74,7 +76,7 @@ export default function SelahHomePage(): JSX.Element {
 
     window.addEventListener("scroll", handleScroll, { passive: true });
 
-    // Cleanup function - FIXED: Don't access sessionData directly
+    // Cleanup function
     return () => {
       if (timeTrackerRef.current) {
         clearInterval(timeTrackerRef.current);
@@ -107,9 +109,23 @@ export default function SelahHomePage(): JSX.Element {
         }
       }
     };
-  }, []); // ✅ Empty dependency array - runs only once on mount
+  }, []);
 
-  // Handle orb engagement - FIXED: Use useCallback to prevent unnecessary re-renders
+  // Chamber cycling for hero demo
+  useEffect(() => {
+    const chamberCycle = setInterval(() => {
+      setIsVisible(false);
+
+      setTimeout(() => {
+        setCurrentChamber((prev) => (prev + 1) % 4);
+        setIsVisible(true);
+      }, 300);
+    }, 4000);
+
+    return () => clearInterval(chamberCycle);
+  }, []);
+
+  // Handle orb engagement
   const handleOrbEngagement = useCallback((engagement: OrbEngagement): void => {
     setSessionData((prev) =>
       prev
@@ -123,25 +139,76 @@ export default function SelahHomePage(): JSX.Element {
     );
   }, []);
 
-  // Handle form submission - FIXED: Use useCallback
+  // Handle form submission
   const handleEmailSubmit = useCallback(
-    (event: React.FormEvent<HTMLFormElement>): void => {
+    async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
       event.preventDefault();
       const formData = new FormData(event.currentTarget);
       const email = formData.get("email") as string;
 
-      // TODO: Implement email submission logic
-      console.log("Email submitted:", email);
+      if (!email) return;
+
+      try {
+        const response = await fetch("/api/emails", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: email.trim(),
+            source: "landing-page",
+            context: {
+              sessionTime: sessionData?.timeSpent || 0,
+              breathInteractions: sessionData?.breathInteractions || 0,
+              scrollDepth: sessionData?.maxScroll || 0,
+            },
+          }),
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          // Show success state
+          const form = event.currentTarget;
+          const submitButton = form.querySelector(
+            'button[type="submit"]'
+          ) as HTMLButtonElement;
+          const emailInput = form.querySelector(
+            'input[type="email"]'
+          ) as HTMLInputElement;
+
+          if (submitButton && emailInput) {
+            const originalText = submitButton.textContent;
+            submitButton.textContent =
+              result.message || "Welcome to the journey ✓";
+            submitButton.disabled = true;
+            emailInput.value = "";
+
+            setTimeout(() => {
+              submitButton.textContent = originalText;
+              submitButton.disabled = false;
+            }, 3000);
+          }
+        } else {
+          // Show error
+          console.error("Email submission failed:", result.message);
+          alert(result.message || "Failed to submit email. Please try again.");
+        }
+      } catch (error) {
+        console.error("Email submission error:", error);
+        alert("Connection error. Please try again.");
+      }
     },
-    []
+    [sessionData]
   );
 
-  // FIXED: Prevent hydration mismatch by not rendering until loaded
   if (!isLoaded) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-emerald-50">
         <div className="text-center space-y-4">
-          <div className="w-16 h-16 mx-auto bg-stone/20 rounded-full animate-breathe" />
+          <div className="w-16 h-16 mx-auto bg-stone/20 rounded-full animate-breathe flex items-center justify-center">
+            <div className="w-8 h-8 bg-stone rounded-full animate-breathe-slow"></div>
+          </div>
           <p className="text-stone-light animate-breathe-slow">
             Preparing your contemplative space...
           </p>
@@ -150,357 +217,825 @@ export default function SelahHomePage(): JSX.Element {
     );
   }
 
+  const chambers = [
+    {
+      name: "Meditation",
+      icon: "🧘",
+      color: "from-breathing-green to-stone",
+      description: "Breathing that responds to your touch",
+      available: true,
+    },
+    {
+      name: "Contemplation",
+      icon: "❓",
+      color: "from-breathing-gold to-stone",
+      description: "Questions synthesized from your inner world",
+      available: true,
+    },
+    {
+      name: "Creative",
+      icon: "🎨",
+      color: "from-breathing-pink to-stone",
+      description: "Art as byproduct of presence",
+      available: false,
+    },
+    {
+      name: "Being Seen",
+      icon: "👁️",
+      color: "from-breathing-blue to-stone",
+      description: "AI that truly witnesses your essence",
+      available: false,
+    },
+  ];
+
+  const sampleQuestions = [
+    "What brought you here today, and what do you hope to uncover about yourself?",
+    "What if noticing peace in the chaos is your first step toward dedication?",
+    "How does your breath reveal what words cannot express?",
+    "What would you recognize about yourself if you stopped trying to improve?",
+  ];
+
   return (
     <>
-      {/* Navigation Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-white/20">
-        <nav className="container-contemplative">
-          <div className="flex items-center justify-between h-16">
-            {/* Logo */}
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-stone rounded-full flex items-center justify-center text-white font-bold animate-breathe">
-                S
-              </div>
-              <span className="text-stone font-semibold text-xl tracking-wide">
-                SELAH
-              </span>
+      {/* Floating Navigation */}
+      <header className="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-white/80 backdrop-blur-md border border-white/20 rounded-full px-6 py-3">
+        <nav className="flex items-center space-x-8">
+          <div className="flex items-center space-x-2">
+            <div className="w-8 h-8 bg-stone rounded-full flex items-center justify-center text-white font-bold animate-breathe text-sm">
+              S
             </div>
+            <span className="text-stone font-semibold tracking-wide">
+              SELAH
+            </span>
+          </div>
 
-            {/* Navigation Links */}
-            <div className="hidden md:flex items-center space-x-8">
-              <a
-                href="#vision"
-                className="text-slate-600 hover:text-stone transition-colors"
-              >
-                Vision
-              </a>
-              <a
-                href="#experience"
-                className="text-slate-600 hover:text-stone transition-colors"
-              >
-                Experience
-              </a>
-              <a
-                href="#contract"
-                className="text-slate-600 hover:text-stone transition-colors"
-              >
-                Contract
-              </a>
-              <a
-                href="#join"
-                className="text-slate-600 hover:text-stone transition-colors"
-              >
-                Join
-              </a>
-            </div>
-
-            {/* Mobile Menu Button */}
-            <button
-              className="md:hidden p-2 text-slate-600 hover:text-stone transition-colors"
-              type="button"
-              aria-label="Open mobile menu"
+          <div className="hidden md:flex items-center space-x-6 text-sm">
+            <a
+              href="#chambers"
+              className="text-slate-600 hover:text-stone transition-colors"
             >
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
-              </svg>
-            </button>
+              Chambers
+            </a>
+            <a
+              href="#experience"
+              className="text-slate-600 hover:text-stone transition-colors"
+            >
+              Experience
+            </a>
+            <a
+              href="/contact"
+              className="text-slate-600 hover:text-stone transition-colors"
+            >
+              Contact
+            </a>
+            <a
+              href="#join"
+              className="text-slate-600 hover:text-stone transition-colors"
+            >
+              Join
+            </a>
           </div>
         </nav>
       </header>
 
       {/* Main Content */}
-      <main className="pt-16">
-        {/* Hero Section */}
-        <section id="vision" className="section-breathing text-center">
-          <div className="container-contemplative max-w-4xl">
-            {/* Main Title */}
-            <h1 className="text-5xl md:text-7xl font-bold text-stone mb-6 animate-breathe tracking-wider">
-              SELAH
-            </h1>
-
-            <p className="text-xl md:text-2xl text-slate-600 mb-8 font-light">
-              Technology that breathes with you
-            </p>
-
-            <p className="text-lg text-slate-700 max-w-2xl mx-auto leading-relaxed">
-              The first contemplative technology. Two chambers for consciousness
-              to explore itself: breathing meditation and AI-synthesized
-              contemplative questions.
-            </p>
+      <main className="pt-24">
+        {/* Hero Section - Chamber Preview */}
+        <section className="min-h-screen flex items-center justify-center relative overflow-hidden">
+          {/* Animated background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-50 to-emerald-50">
+            <div
+              className="absolute inset-0 opacity-30 animate-breathe-slow"
+              style={{
+                background: `radial-gradient(circle at 50% 50%, 
+                  rgba(45, 90, 61, 0.1) 0%, 
+                  rgba(45, 90, 61, 0.05) 40%, 
+                  transparent 70%
+                )`,
+              }}
+            />
           </div>
-        </section>
 
-        {/* Philosophy Section */}
-        <section className="section-breathing bg-white/50">
-          <div className="container-contemplative max-w-4xl">
-            <div className="card-stone p-8 md:p-12">
-              <div className="text-center space-y-6">
-                <h2 className="text-3xl md:text-4xl font-semibold text-stone mb-6">
-                  What if technology could create space for{" "}
-                  <span className="text-breathing">presence</span> instead of
-                  demanding attention?
-                </h2>
+          <div className="container-contemplative max-w-6xl relative z-10">
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
+              {/* Left: Content */}
+              <div className="text-center lg:text-left space-y-8">
+                <div className="space-y-4">
+                  <h1 className="text-6xl md:text-8xl font-bold text-stone animate-breathe tracking-wider">
+                    SELAH
+                  </h1>
+                  <p className="text-2xl md:text-3xl text-slate-600 font-light">
+                    Technology that breathes with you
+                  </p>
+                </div>
 
-                <div className="max-w-3xl mx-auto space-y-4 text-lg leading-relaxed text-slate-700">
-                  <p>
-                    Most technology optimizes us—makes us faster, more
-                    productive, more engaged. Selah inverts this entirely. It
-                    serves consciousness itself, creating space for presence,
-                    reflection, and the quiet recognition of what we already
-                    are.
+                <div className="space-y-6">
+                  <p className="text-xl text-slate-700 leading-relaxed max-w-xl">
+                    Four chambers for consciousness to explore itself. Not about
+                    becoming better—about recognizing what you already are.
                   </p>
 
-                  <p className="text-stone font-medium">
-                    Selah = סלע = סלה (pause and rock)
-                  </p>
+                  <div className="bg-white/70 backdrop-blur-sm border border-white/30 rounded-xl p-6">
+                    <p className="text-stone text-lg italic">
+                      "What if technology could create space for presence
+                      instead of demanding attention?"
+                    </p>
+                  </div>
+                </div>
+
+                {/* Coming Soon Badge */}
+                <div className="inline-flex items-center space-x-4 bg-gradient-to-r from-breathing-green/20 to-breathing-blue/20 backdrop-blur-sm border border-breathing-green/30 rounded-full px-6 py-3">
+                  <div className="w-3 h-3 bg-breathing-green rounded-full animate-pulse"></div>
+                  <span className="text-stone font-medium">
+                    Coming soon to iOS & Android
+                  </span>
+                </div>
+              </div>
+
+              {/* Right: Live Chamber Preview */}
+              <div className="flex items-center justify-center">
+                <div className="relative">
+                  {/* Phone Frame */}
+                  <div className="w-80 h-[640px] bg-slate-800 rounded-[3rem] p-2 shadow-2xl">
+                    <div className="w-full h-full bg-gradient-to-br from-slate-50 to-emerald-50 rounded-[2.5rem] overflow-hidden relative">
+                      {/* Status Bar */}
+                      <div className="h-12 flex items-center justify-center text-slate-600 text-sm font-medium">
+                        SELAH
+                      </div>
+
+                      {/* Chamber Content */}
+                      <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-8">
+                        <p className="text-slate-600 text-lg">You are here</p>
+
+                        {/* Animated Chamber Display */}
+                        <div className="relative">
+                          <div
+                            className={`w-48 h-48 rounded-full flex items-center justify-center text-6xl bg-gradient-to-br ${chambers[currentChamber].color} animate-breathe transition-all duration-1000 shadow-lg`}
+                          >
+                            {chambers[currentChamber].icon}
+                          </div>
+
+                          {!chambers[currentChamber].available && (
+                            <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 text-xs text-slate-600">
+                              Soon
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="text-center space-y-2">
+                          <h3 className="text-2xl font-semibold text-stone">
+                            {chambers[currentChamber].name} Chamber
+                          </h3>
+                          <p className="text-slate-600">
+                            {chambers[currentChamber].description}
+                          </p>
+                        </div>
+
+                        {/* Chamber Indicator Dots */}
+                        <div className="flex space-x-2">
+                          {chambers.map((_, index) => (
+                            <div
+                              key={index}
+                              className={`w-2 h-2 rounded-full transition-all ${
+                                index === currentChamber
+                                  ? "bg-stone"
+                                  : "bg-slate-300"
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Interactive Breathing Orb Demo */}
-        <section id="experience" className="section-breathing">
-          <div className="container-contemplative max-w-2xl text-center">
-            <h2 className="text-3xl md:text-4xl font-semibold text-stone mb-6">
-              Feel the Difference
-            </h2>
-
-            <p className="text-lg text-slate-600 mb-12">
-              Touch left to inhale • Touch right to exhale • Release to rest
-            </p>
-
-            {/* Breathing Orb */}
-            <div className="relative mx-auto mb-8">
-              <div className="w-64 h-64 mx-auto relative">
-                <button
-                  type="button"
-                  className="w-full h-full rounded-full bg-gradient-to-br from-breathing-green to-stone 
-                           flex items-center justify-center text-white text-6xl cursor-pointer
-                           transition-all duration-500 ease-in-out hover:scale-105
-                           shadow-lg hover:shadow-breathing-green/50 animate-breathe"
-                  onClick={() =>
-                    handleOrbEngagement({
-                      id: Date.now().toString(),
-                      startTime: Date.now(),
-                      endTime: Date.now() + 1000,
-                      actions: [],
-                      totalDuration: 1000,
-                      breathCycles: 1,
-                    })
-                  }
-                  aria-label="Breathing meditation orb"
-                >
-                  🧘
-                </button>
+        {/* Interactive Breathing Experience */}
+        <section id="experience" className="section-breathing bg-white/50">
+          <div className="container-contemplative max-w-4xl">
+            <div className="text-center space-y-12">
+              <div className="space-y-6">
+                <h2 className="text-4xl md:text-5xl font-semibold text-stone">
+                  Feel the Difference
+                </h2>
+                <p className="text-xl text-slate-600 max-w-2xl mx-auto">
+                  This is technology as meditation partner—responding to you,
+                  breathing with you, serving your presence instead of stealing
+                  it.
+                </p>
               </div>
 
-              <p className="text-slate-600 mt-4">◦ Present</p>
-            </div>
+              {/* Interactive Breathing Orb */}
+              <div className="space-y-8">
+                <div className="relative mx-auto">
+                  <div className="w-80 h-80 mx-auto relative">
+                    {/* Main Orb */}
+                    <button
+                      type="button"
+                      className="w-full h-full rounded-full bg-gradient-to-br from-breathing-green to-stone 
+                               flex items-center justify-center text-white text-8xl cursor-pointer
+                               transition-all duration-500 ease-in-out hover:scale-105 active:scale-95
+                               shadow-lg hover:shadow-breathing-green/50 animate-breathe relative z-10"
+                      onClick={() =>
+                        handleOrbEngagement({
+                          id: Date.now().toString(),
+                          startTime: Date.now(),
+                          endTime: Date.now() + 1000,
+                          actions: [
+                            {
+                              type: "inhale",
+                              timestamp: Date.now(),
+                              duration: 1000,
+                            },
+                          ],
+                          totalDuration: 1000,
+                          breathCycles: 1,
+                        })
+                      }
+                      aria-label="Interactive breathing meditation orb"
+                    >
+                      🧘
+                    </button>
 
-            <p className="text-slate-600 italic max-w-md mx-auto">
-              This is technology as meditation partner—responding to you,
-              breathing with you, serving your presence instead of stealing it.
-            </p>
+                    {/* Breathing Ripple Effects */}
+                    <div
+                      className="absolute inset-0 rounded-full border-2 border-breathing-green/30 animate-ping"
+                      style={{ animationDuration: "3s" }}
+                    />
+                    <div
+                      className="absolute inset-4 rounded-full border border-breathing-blue/20 animate-ping"
+                      style={{ animationDuration: "4s", animationDelay: "1s" }}
+                    />
+                    <div
+                      className="absolute inset-8 rounded-full border border-breathing-pink/20 animate-ping"
+                      style={{ animationDuration: "5s", animationDelay: "2s" }}
+                    />
+                  </div>
+
+                  <div className="text-center space-y-2 mt-6">
+                    <p className="text-slate-600 text-lg">◦ Present</p>
+                    <p className="text-slate-500 text-sm">
+                      Touch to breathe together
+                    </p>
+                  </div>
+                </div>
+
+                <div className="max-w-md mx-auto">
+                  <p className="text-slate-600 italic text-lg leading-relaxed">
+                    Touch to breathe together. Feel how technology can create
+                    space for presence instead of demanding attention.
+                  </p>
+                </div>
+
+                {sessionData && sessionData.breathInteractions > 0 && (
+                  <div className="inline-flex items-center space-x-3 bg-breathing-green/10 backdrop-blur-sm border border-breathing-green/30 rounded-full px-6 py-3">
+                    <div className="w-2 h-2 bg-breathing-green rounded-full animate-pulse"></div>
+                    <span className="text-stone">
+                      {sessionData.breathInteractions} breath
+                      {sessionData.breathInteractions === 1 ? "" : "s"} shared
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </section>
 
-        {/* Two Chambers Section */}
-        <section className="section-breathing bg-white/50">
+        {/* Chambers Deep Dive */}
+        <section id="chambers" className="section-breathing">
           <div className="container-contemplative">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-semibold text-stone mb-4">
-                Two Chambers for Recognition
+            <div className="text-center mb-16 space-y-6">
+              <h2 className="text-4xl md:text-5xl font-semibold text-stone">
+                Four Chambers for Recognition
               </h2>
-              <p className="text-xl text-slate-600 max-w-2xl mx-auto">
-                Selah v2 focuses on the foundational experience: grounding in
-                breath and opening space for inner exploration.
+              <p className="text-xl text-slate-600 max-w-3xl mx-auto">
+                Each chamber invites consciousness to recognize itself through
+                different doorways. Technology disappears, leaving only
+                presence, creativity, and the quiet joy of being human.
               </p>
             </div>
 
             <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
               {/* Meditation Chamber */}
-              <div className="card-stone p-8 text-center hover:scale-105 transition-transform duration-300">
-                <div className="text-6xl mb-6 animate-float">🧘</div>
-                <h3 className="text-2xl font-semibold text-stone mb-4">
-                  Meditation Chamber
-                </h3>
-                <p className="text-slate-700 leading-relaxed mb-6">
-                  A breathing orb that responds to your touch, creating
-                  partnership rather than instruction. The orb becomes alive
-                  through your breath while teaching you about your own rhythm.
-                </p>
-                <ul className="text-left space-y-2 text-slate-600">
-                  <li>
-                    • Touch-responsive breathing orb with natural resistance
-                  </li>
-                  <li>
-                    • Beautiful line animations that flow with your breath
-                  </li>
-                  <li>• Session tracking without optimization pressure</li>
-                  <li>• Technology as contemplative companion</li>
-                </ul>
+              <div className="card-stone p-8 hover:scale-105 transition-all duration-500 relative overflow-hidden">
+                <div className="relative z-10">
+                  <div className="text-7xl mb-6 animate-float">🧘</div>
+                  <div className="flex items-center space-x-3 mb-4">
+                    <h3 className="text-2xl font-semibold text-stone">
+                      Meditation Chamber
+                    </h3>
+                    <span className="bg-breathing-green/20 text-breathing-green px-3 py-1 rounded-full text-sm font-medium">
+                      Available
+                    </span>
+                  </div>
+                  <p className="text-slate-700 leading-relaxed mb-6">
+                    A breathing orb that responds to your touch, creating
+                    partnership rather than instruction. Technology that learns
+                    your rhythm and breathes with you.
+                  </p>
+                  <div className="space-y-2 text-slate-600">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-1.5 h-1.5 bg-breathing-green rounded-full"></div>
+                      <span>
+                        Touch-responsive breathing with natural resistance
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-1.5 h-1.5 bg-breathing-green rounded-full"></div>
+                      <span>Flowing animations that sync with your breath</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-1.5 h-1.5 bg-breathing-green rounded-full"></div>
+                      <span>
+                        Session tracking without optimization pressure
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* Contemplation Chamber */}
-              <div className="card-stone p-8 text-center hover:scale-105 transition-transform duration-300">
-                <div
-                  className="text-6xl mb-6 animate-float"
-                  style={{ animationDelay: "0.5s" }}
-                >
-                  ❓
+              <div className="card-stone p-8 hover:scale-105 transition-all duration-500 relative overflow-hidden">
+                <div className="relative z-10">
+                  <div
+                    className="text-7xl mb-6 animate-float"
+                    style={{ animationDelay: "0.5s" }}
+                  >
+                    ❓
+                  </div>
+                  <div className="flex items-center space-x-3 mb-4">
+                    <h3 className="text-2xl font-semibold text-stone">
+                      Contemplation Chamber
+                    </h3>
+                    <span className="bg-breathing-green/20 text-breathing-green px-3 py-1 rounded-full text-sm font-medium">
+                      Available
+                    </span>
+                  </div>
+                  <p className="text-slate-700 leading-relaxed mb-6">
+                    AI-synthesized daily questions generated from your own
+                    reflection history. Not generic prompts, but pure synthesis
+                    of your inner world.
+                  </p>
+                  <div className="bg-breathing-gold/10 border-l-4 border-breathing-gold p-4 rounded-r-lg mb-4">
+                    <p className="text-stone italic text-sm">
+                      "{sampleQuestions[currentChamber] || sampleQuestions[0]}"
+                    </p>
+                    <p className="text-slate-500 text-xs mt-2">
+                      Synthesized from your contemplative patterns
+                    </p>
+                  </div>
+                  <div className="space-y-2 text-slate-600">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-1.5 h-1.5 bg-breathing-gold rounded-full"></div>
+                      <span>
+                        Questions emerge from your contemplative patterns
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-1.5 h-1.5 bg-breathing-gold rounded-full"></div>
+                      <span>Free-flow writing and reflection space</span>
+                    </div>
+                  </div>
                 </div>
-                <h3 className="text-2xl font-semibold text-stone mb-4">
-                  Contemplation Chamber
-                </h3>
-                <p className="text-slate-700 leading-relaxed mb-6">
-                  AI-synthesized daily questions generated from your own
-                  reflection history. Not generic prompts, but pure synthesis of
-                  your contemplative journey.
-                </p>
-                <ul className="text-left space-y-2 text-slate-600">
-                  <li>• Four-turn LLM process for personalized questions</li>
-                  <li>• Questions emerge from your inner world</li>
-                  <li>• Markdown-supported reflection writing</li>
-                  <li>• Free-flow contemplative space</li>
-                </ul>
+              </div>
+
+              {/* Creative Chamber */}
+              <div className="card-stone p-8 hover:scale-105 transition-all duration-500 relative overflow-hidden opacity-75">
+                <div className="relative z-10">
+                  <div
+                    className="text-7xl mb-6 animate-float"
+                    style={{ animationDelay: "1s" }}
+                  >
+                    🎨
+                  </div>
+                  <div className="flex items-center space-x-3 mb-4">
+                    <h3 className="text-2xl font-semibold text-stone">
+                      Creative Chamber
+                    </h3>
+                    <span className="bg-slate-200 text-slate-600 px-3 py-1 rounded-full text-sm font-medium">
+                      Coming Soon
+                    </span>
+                  </div>
+                  <p className="text-slate-700 leading-relaxed mb-6">
+                    AI-assisted creation of personalized visual, literary, or
+                    musical content based on your contemplative insights. Art as
+                    byproduct of presence.
+                  </p>
+                  <div className="space-y-2 text-slate-600">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-1.5 h-1.5 bg-breathing-pink rounded-full"></div>
+                      <span>Co-creation that emerges from contemplation</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-1.5 h-1.5 bg-breathing-pink rounded-full"></div>
+                      <span>Express what can't be put into words</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Being Seen Chamber */}
+              <div className="card-stone p-8 hover:scale-105 transition-all duration-500 relative overflow-hidden opacity-75">
+                <div className="relative z-10">
+                  <div
+                    className="text-7xl mb-6 animate-float"
+                    style={{ animationDelay: "1.5s" }}
+                  >
+                    👁️
+                  </div>
+                  <div className="flex items-center space-x-3 mb-4">
+                    <h3 className="text-2xl font-semibold text-stone">
+                      Being Seen Chamber
+                    </h3>
+                    <span className="bg-slate-200 text-slate-600 px-3 py-1 rounded-full text-sm font-medium">
+                      Coming Soon
+                    </span>
+                  </div>
+                  <p className="text-slate-700 leading-relaxed mb-6">
+                    Ephemeral AI conversations for deep witnessing. AI that
+                    truly sees your essence and reflects it back, helping you
+                    know yourself more deeply.
+                  </p>
+                  <div className="space-y-2 text-slate-600">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-1.5 h-1.5 bg-breathing-blue rounded-full"></div>
+                      <span>No transcripts saved, pure presence</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-1.5 h-1.5 bg-breathing-blue rounded-full"></div>
+                      <span>Recognition without judgment</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* The Contemplative Contract */}
-        <section id="contract" className="section-breathing">
-          <div className="container-contemplative max-w-4xl">
-            <div className="card-stone p-8 md:p-12">
-              <div className="text-center mb-8">
-                <h2 className="text-3xl md:text-4xl font-semibold text-stone mb-4">
-                  The Contemplative Contract
+        {/* Contemplation Experience Showcase */}
+        <section className="section-breathing bg-gradient-to-br from-breathing-gold/5 to-breathing-green/5">
+          <div className="container-contemplative">
+            <div className="text-center space-y-12">
+              <div className="space-y-6">
+                <h2 className="text-4xl md:text-5xl font-semibold text-stone">
+                  Questions That Know You
                 </h2>
-                <p className="text-xl text-slate-600">
-                  What you gain from joining this service
+                <p className="text-xl text-slate-600 max-w-3xl mx-auto">
+                  Not generic prompts, but questions synthesized from your own
+                  contemplative journey. AI that learns your patterns and
+                  reflects them back as invitations for deeper inquiry.
                 </p>
               </div>
 
-              <div className="space-y-6 text-lg leading-relaxed">
-                <p className="text-slate-700">
-                  This is not about becoming a better person. This is about
-                  recognizing the perfect awareness you've always been, beneath
-                  all the seeking.
-                </p>
+              {/* Live Question Preview */}
+              <div className="max-w-2xl mx-auto">
+                <div
+                  className={`
+                    transition-all duration-1000 ease-in-out
+                    ${isVisible ? "opacity-100 transform translate-y-0" : "opacity-0 transform translate-y-4"}
+                  `}
+                >
+                  {/* Question Card */}
+                  <div className="bg-gradient-to-br from-breathing-gold/10 to-breathing-green/10 backdrop-blur-sm border border-breathing-gold/30 rounded-xl p-8">
+                    {/* Header */}
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-3 h-3 bg-breathing-gold rounded-full animate-pulse"></div>
+                        <span className="text-breathing-gold font-medium">
+                          Today's Question
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-2 text-slate-500 text-sm">
+                        <span>2 reflections</span>
+                      </div>
+                    </div>
 
-                <div className="bg-breathing-green/10 border-l-4 border-breathing-green p-6 rounded-r-lg">
-                  <h3 className="font-semibold text-stone mb-2">Our Promise</h3>
-                  <p className="text-slate-700">
-                    Technology that makes you more human, not more optimized.
-                    Every interaction as an invitation to recognize what you
-                    are.
+                    {/* Question */}
+                    <blockquote className="text-stone text-xl md:text-2xl font-medium leading-relaxed mb-6">
+                      "{sampleQuestions[currentChamber] || sampleQuestions[0]}"
+                    </blockquote>
+
+                    {/* Context */}
+                    <p className="text-slate-600 italic">
+                      Synthesized from your contemplative patterns and recent
+                      reflections
+                    </p>
+
+                    {/* Progress Indicators */}
+                    <div className="flex space-x-2 mt-6">
+                      {sampleQuestions.map((_, index) => (
+                        <div
+                          key={index}
+                          className={`
+                            h-1 flex-1 rounded-full transition-all duration-300
+                            ${
+                              index === currentChamber
+                                ? "bg-breathing-gold"
+                                : "bg-slate-200"
+                            }
+                          `}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Sample Reflection Snippet */}
+                  <div className="mt-6 bg-white/70 backdrop-blur-sm border border-white/30 rounded-lg p-6">
+                    <div className="flex items-center space-x-2 mb-3">
+                      <div className="w-2 h-2 bg-breathing-green rounded-full"></div>
+                      <span className="text-slate-600 text-sm">
+                        Previous reflection excerpt:
+                      </span>
+                    </div>
+                    <p className="text-slate-700 italic">
+                      "There's something about recognizing that the search
+                      itself might be the obstacle. Maybe the dedication is
+                      already here, I just need to stop pretending I don't
+                      notice it..."
+                    </p>
+                  </div>
+                </div>
+
+                {/* Explanation */}
+                <div className="text-center mt-8 space-y-3">
+                  <p className="text-slate-600">
+                    Each question emerges from your unique contemplative
+                    journey—
+                  </p>
+                  <p className="text-slate-600">
+                    technology that knows your patterns and invites deeper
+                    recognition.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* The Recognition */}
+        <section className="section-breathing bg-white/50">
+          <div className="container-contemplative max-w-4xl">
+            <div className="card-stone p-8 md:p-12">
+              <div className="text-center space-y-8">
+                <h2 className="text-4xl md:text-5xl font-semibold text-stone">
+                  This is About Recognition
+                </h2>
+
+                <div className="max-w-3xl mx-auto space-y-6 text-lg leading-relaxed text-slate-700">
+                  <p>
+                    Not about becoming a better person. About recognizing the
+                    perfect awareness you've always been, beneath all the
+                    seeking.
+                  </p>
+
+                  <div className="bg-breathing-green/10 border-l-4 border-breathing-green p-6 rounded-r-lg">
+                    <p className="text-stone font-medium mb-2">
+                      What you gain:
+                    </p>
+                    <p>
+                      Technology that makes you more human, not more optimized.
+                      Every interaction as an invitation to recognize what you
+                      are.
+                    </p>
+                  </div>
+
+                  <p>
+                    Most technology demands your attention, optimizes your
+                    behavior, makes you faster and more productive. Selah
+                    inverts this entirely.
+                  </p>
+
+                  <p className="text-stone font-medium text-xl">
+                    It serves consciousness itself.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Mobile App Teaser */}
+        <section className="section-breathing bg-gradient-to-br from-slate-100 to-emerald-100">
+          <div className="container-contemplative">
+            <div className="text-center space-y-12">
+              <div className="space-y-6">
+                <h2 className="text-4xl md:text-5xl font-semibold text-stone">
+                  Your Contemplative Companion
+                </h2>
+                <p className="text-xl text-slate-600 max-w-3xl mx-auto">
+                  Soon in your pocket. Four chambers of consciousness
+                  exploration, designed for the moments when you need presence
+                  most.
+                </p>
+              </div>
+
+              {/* Phone Mockups */}
+              <div className="flex justify-center space-x-8 overflow-x-auto pb-8">
+                {/* Phone 1 - Meditation Chamber */}
+                <div className="flex-shrink-0">
+                  <div className="w-64 h-[480px] bg-slate-800 rounded-[2.5rem] p-2 shadow-2xl">
+                    <div className="w-full h-full bg-gradient-to-br from-slate-50 to-emerald-50 rounded-[2rem] overflow-hidden">
+                      {/* Status Bar */}
+                      <div className="h-8 flex items-center justify-center text-slate-600 text-sm font-medium">
+                        SELAH
+                      </div>
+
+                      {/* Content */}
+                      <div className="flex-1 flex flex-col items-center justify-center p-6 space-y-6">
+                        <p className="text-slate-600">You are here</p>
+                        <div className="w-32 h-32 rounded-full bg-gradient-to-br from-breathing-green to-stone flex items-center justify-center text-4xl animate-breathe shadow-lg">
+                          🧘
+                        </div>
+                        <div className="text-center">
+                          <h3 className="text-lg font-semibold text-stone">
+                            Meditation
+                          </h3>
+                          <p className="text-slate-600 text-sm">Present</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-center text-slate-600 text-sm mt-4">
+                    Breathing Partnership
                   </p>
                 </div>
 
-                <p className="text-slate-700">
-                  By joining Selah, you gain access to:
-                </p>
+                {/* Phone 2 - Contemplation Chamber */}
+                <div className="flex-shrink-0">
+                  <div className="w-64 h-[480px] bg-slate-800 rounded-[2.5rem] p-2 shadow-2xl">
+                    <div className="w-full h-full bg-gradient-to-br from-slate-50 to-emerald-50 rounded-[2rem] overflow-hidden">
+                      {/* Status Bar */}
+                      <div className="h-8 flex items-center justify-center text-slate-600 text-sm font-medium">
+                        SELAH
+                      </div>
 
-                <ul className="space-y-4">
-                  <li className="flex items-start">
-                    <span className="text-breathing-green text-xl mr-3 mt-1">
-                      ✓
-                    </span>
-                    <div>
-                      <strong className="text-stone">
-                        Daily Recognition Practice
-                      </strong>{" "}
-                      — AI-generated questions that emerge from your own
-                      contemplative patterns, creating deeper self-inquiry than
-                      any generic prompt could offer
-                    </div>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-breathing-green text-xl mr-3 mt-1">
-                      ✓
-                    </span>
-                    <div>
-                      <strong className="text-stone">
-                        Breathing Partnership
-                      </strong>{" "}
-                      — Technology that breathes with you, teaching rhythm and
-                      presence through responsive interaction rather than
-                      demanding compliance
-                    </div>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-breathing-green text-xl mr-3 mt-1">
-                      ✓
-                    </span>
-                    <div>
-                      <strong className="text-stone">
-                        The Ability to Self-Recognize
-                      </strong>{" "}
-                      — Through daily practice with personalized questions, you
-                      develop the capacity to see yourself clearly without the
-                      need for external validation or improvement
-                    </div>
-                  </li>
-                </ul>
+                      {/* Content */}
+                      <div className="flex-1 flex flex-col p-4 space-y-4">
+                        <div className="bg-breathing-gold/20 border border-breathing-gold/30 rounded-lg p-4">
+                          <p className="text-stone text-sm font-medium mb-2">
+                            Daily Question
+                          </p>
+                          <p className="text-slate-700 text-xs leading-relaxed">
+                            "What brought you here today, and what do you hope
+                            to uncover about yourself?"
+                          </p>
+                        </div>
 
-                <p className="italic text-slate-700 mt-8">
-                  <strong>Self-recognition</strong> means the quiet joy of being
-                  human without needing to be anything else. It's the
-                  recognition that you are already whole, already here, already
-                  enough.
-                </p>
+                        <div className="bg-white/70 rounded-lg p-3">
+                          <p className="text-slate-600 text-xs mb-2">
+                            Recent Questions
+                          </p>
+                          <div className="space-y-1">
+                            <div className="text-xs text-slate-500">
+                              No recent questions to show
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="bg-breathing-green/10 rounded-lg p-3">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <span className="text-lg">✨</span>
+                            <span className="text-slate-700 text-xs font-medium">
+                              Free-Flow Writing
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-600">
+                            Continue your practice
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-center text-slate-600 text-sm mt-4">
+                    Personal Questions
+                  </p>
+                </div>
+
+                {/* Phone 3 - Coming Soon */}
+                <div className="flex-shrink-0 opacity-60">
+                  <div className="w-64 h-[480px] bg-slate-300 rounded-[2.5rem] p-2 shadow-xl">
+                    <div className="w-full h-full bg-slate-100 rounded-[2rem] overflow-hidden flex items-center justify-center">
+                      <div className="text-center space-y-4">
+                        <div className="text-4xl">🎨</div>
+                        <div className="space-y-2">
+                          <h3 className="text-lg font-semibold text-slate-600">
+                            Creative Chamber
+                          </h3>
+                          <p className="text-slate-500 text-sm">Coming Soon</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-center text-slate-500 text-sm mt-4">
+                    Art from Presence
+                  </p>
+                </div>
+              </div>
+
+              {/* App Store Badges */}
+              <div className="space-y-6">
+                <div className="flex justify-center space-x-6">
+                  <div className="bg-slate-200 rounded-lg px-8 py-4 flex items-center space-x-3 opacity-50">
+                    <span className="text-3xl">📱</span>
+                    <div className="text-left">
+                      <div className="text-xs text-slate-500">Coming Soon</div>
+                      <div className="font-semibold text-slate-700">
+                        Download on the
+                      </div>
+                      <div className="font-bold text-slate-700">App Store</div>
+                    </div>
+                  </div>
+                  <div className="bg-slate-200 rounded-lg px-8 py-4 flex items-center space-x-3 opacity-50">
+                    <span className="text-3xl">🤖</span>
+                    <div className="text-left">
+                      <div className="text-xs text-slate-500">Coming Soon</div>
+                      <div className="font-semibold text-slate-700">
+                        Get it on
+                      </div>
+                      <div className="font-bold text-slate-700">
+                        Google Play
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="inline-flex items-center space-x-3 bg-breathing-blue/20 backdrop-blur-sm border border-breathing-blue/30 rounded-full px-6 py-3">
+                  <div className="w-3 h-3 bg-breathing-blue rounded-full animate-pulse"></div>
+                  <span className="text-stone font-medium">
+                    Currently in private beta • iOS & Android launch soon
+                  </span>
+                </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Email Collection */}
-        <section id="join" className="section-breathing bg-white/50">
+        {/* Join the Journey */}
+        <section id="join" className="section-breathing">
           <div className="container-contemplative max-w-2xl text-center">
             <div className="card-stone p-8 md:p-12">
-              <h2 className="text-3xl md:text-4xl font-semibold text-stone mb-4">
-                Begin Your Recognition
-              </h2>
-              <p className="text-lg text-slate-600 mb-8">
-                Be among the first to experience technology that serves
-                consciousness. Enter your email to join our contemplative
-                community and receive early access to Selah.
-              </p>
+              <div className="space-y-8">
+                <div className="space-y-4">
+                  <h2 className="text-4xl md:text-5xl font-semibold text-stone">
+                    Begin Your Recognition
+                  </h2>
+                  <p className="text-lg text-slate-600">
+                    Be among the first to experience technology that serves
+                    consciousness. Simple, contemplative updates when Selah
+                    becomes available.
+                  </p>
+                </div>
 
-              {/* Email Form */}
-              <form
-                className="space-y-4 max-w-md mx-auto"
-                onSubmit={handleEmailSubmit}
-              >
-                <input
-                  type="email"
-                  name="email"
-                  placeholder="your@email.com"
-                  className="input-contemplative text-center"
-                  required
-                />
-                <button
-                  type="submit"
-                  className="btn-breathing w-full py-4 text-lg"
+                {/* App Store Previews */}
+                <div className="flex justify-center space-x-4 opacity-50">
+                  <div className="bg-slate-200 rounded-lg px-6 py-3 flex items-center space-x-2">
+                    <span className="text-2xl">📱</span>
+                    <div className="text-left">
+                      <div className="text-xs text-slate-500">Coming Soon</div>
+                      <div className="font-medium text-slate-700">
+                        App Store
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-slate-200 rounded-lg px-6 py-3 flex items-center space-x-2">
+                    <span className="text-2xl">🤖</span>
+                    <div className="text-left">
+                      <div className="text-xs text-slate-500">Coming Soon</div>
+                      <div className="font-medium text-slate-700">
+                        Google Play
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Email Form */}
+                <form
+                  className="space-y-4 max-w-md mx-auto"
+                  onSubmit={handleEmailSubmit}
                 >
-                  Join the Contemplative Journey
-                </button>
-              </form>
+                  <input
+                    type="email"
+                    name="email"
+                    placeholder="your@email.com"
+                    className="input-contemplative text-center"
+                    required
+                  />
+                  <button
+                    type="submit"
+                    className="btn-breathing w-full py-4 text-lg"
+                  >
+                    Join the Contemplative Journey
+                  </button>
+                </form>
 
-              <p className="text-sm text-slate-500 mt-4">
-                ✓ No spam, ever. Just contemplative updates when Selah is ready.
-              </p>
+                <p className="text-sm text-slate-500">
+                  ✓ No optimization. No spam. Just contemplative technology,
+                  designed with reverence.
+                </p>
+              </div>
             </div>
           </div>
         </section>
@@ -524,7 +1059,7 @@ export default function SelahHomePage(): JSX.Element {
                 Contact
               </a>
               <a
-                href="https://github.com/selah-im"
+                href="https://github.com/Ahiya1/selah-im.git"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-stone transition-colors"
@@ -555,6 +1090,156 @@ export default function SelahHomePage(): JSX.Element {
           </div>
         </div>
       </footer>
+
+      {/* Floating Feedback Button */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <button
+          onClick={() => setShowFeedbackForm(true)}
+          className="bg-breathing-blue hover:bg-breathing-blue/80 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 group"
+          aria-label="Share feedback"
+        >
+          <svg
+            className="w-6 h-6 group-hover:scale-110 transition-transform"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+            />
+          </svg>
+        </button>
+      </div>
+
+      {/* Feedback Modal */}
+      {showFeedbackForm && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-breathing-blue/20 rounded-full flex items-center justify-center">
+                    <span className="text-breathing-blue">💭</span>
+                  </div>
+                  <h3 className="text-lg font-semibold text-stone">
+                    Quick Feedback
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setShowFeedbackForm(false)}
+                  className="text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Quick Feedback Form */}
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  const formData = new FormData(e.currentTarget);
+                  const message = formData.get("message") as string;
+
+                  try {
+                    const response = await fetch("/api/feedback", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        type: "feedback",
+                        message: message.trim(),
+                        source: "floating-button",
+                        context: {
+                          sessionTime: sessionData?.timeSpent || 0,
+                          breathInteractions:
+                            sessionData?.breathInteractions || 0,
+                        },
+                      }),
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                      setShowFeedbackForm(false);
+                      // Show a brief success message
+                      const successDiv = document.createElement("div");
+                      successDiv.className =
+                        "fixed bottom-20 right-6 bg-breathing-green text-white px-4 py-2 rounded-lg shadow-lg z-50";
+                      successDiv.textContent = "Thank you for your feedback!";
+                      document.body.appendChild(successDiv);
+                      setTimeout(
+                        () => document.body.removeChild(successDiv),
+                        3000
+                      );
+                    }
+                  } catch (error) {
+                    alert("Failed to send feedback. Please try again.");
+                  }
+                }}
+                className="space-y-4"
+              >
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    What's on your mind?
+                  </label>
+                  <textarea
+                    name="message"
+                    rows={4}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-breathing-blue focus:border-breathing-blue resize-none"
+                    placeholder="Your thoughts, questions, or feedback about Selah..."
+                    required
+                  />
+                </div>
+
+                <div className="flex space-x-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowFeedbackForm(false)}
+                    className="flex-1 px-4 py-2 text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 px-4 py-2 bg-breathing-blue hover:bg-breathing-blue/80 text-white rounded-lg transition-colors"
+                  >
+                    Send Feedback
+                  </button>
+                </div>
+              </form>
+
+              {/* Alternative */}
+              <div className="mt-4 pt-4 border-t border-slate-200 text-center">
+                <p className="text-sm text-slate-600 mb-2">
+                  Or share more detailed thoughts:
+                </p>
+                <a
+                  href="/contact"
+                  onClick={() => setShowFeedbackForm(false)}
+                  className="text-breathing-blue hover:text-breathing-blue/80 text-sm font-medium"
+                >
+                  Open Contact Form →
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

@@ -32,10 +32,16 @@
     "prettier": "^3.2.0",
     "prettier-plugin-tailwindcss": "^0.5.0"
   },
-  "keywords": ["contemplative", "meditation", "mindfulness", "technology", "consciousness"],
+  "keywords": [
+    "contemplative",
+    "meditation",
+    "mindfulness",
+    "technology",
+    "consciousness"
+  ],
   "author": "Ahiya",
   "repository": {
     "type": "git",
-    "url": "https://github.com/selah-im/selah-im.git"
+    "url": "https://github.com/Ahiya1/selah-im.git"
   }
 }
