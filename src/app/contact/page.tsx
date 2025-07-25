@@ -1,7 +1,8 @@
+"use client";
+
 // src/app/contact/page.tsx - SELAH Contact Page
 // Technology that breathes with you
 // Genuine connection and feedback
-"use client";
 
 import React, { useState } from "react";
 import type { Metadata } from "next";
