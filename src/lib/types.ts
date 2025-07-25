@@ -357,15 +357,10 @@ export type OptionalFields<T, K extends keyof T> = Omit<T, K> &
   Partial<Pick<T, K>>;
 
 export type Timestamp = string; // ISO 8601 format
-
 export type UUID = string; // UUID v4 format
-
 export type EmailAddress = string; // Valid email format
-
 export type Percentage = number; // 0-100
-
 export type Milliseconds = number;
-
 export type Seconds = number;
 
 // ============================================================================
@@ -416,55 +411,3 @@ export const CHAMBER_IDS = [
 
 export const ADMIN_ROLES = ["admin", "viewer"] as const;
 export type AdminRole = (typeof ADMIN_ROLES)[number];
-
-// ============================================================================
-// EXPORT GROUPS
-// ============================================================================
-
-// Email-related exports
-export type {
-  EmailSubmission,
-  EmailSource,
-  EmailValidationResult,
-  EmailFormProps,
-  EmailFormState,
-  EmailSubmissionResponse,
-};
-
-// Analytics-related exports
-export type {
-  EngagementData,
-  OrbEngagement,
-  OrbAction,
-  AnalyticsSummary,
-  DailyStats,
-  EngagementTrend,
-};
-
-// Component-related exports
-export type {
-  BreathingOrbProps,
-  BreathingOrbState,
-  BaseComponentProps,
-  InteractiveComponentProps,
-  ContainerComponentProps,
-};
-
-// Admin-related exports
-export type { AdminDashboardData, AdminSession, LoginAttempt, ExportData };
-
-// Storage-related exports
-export type {
-  LocalStorageData,
-  UserPreferences,
-  SelahError,
-  ErrorBoundaryState,
-};
-
-// Future chamber exports
-export type {
-  ChamberInfo,
-  MeditationSession,
-  ContemplativeQuestion,
-  Reflection,
-};

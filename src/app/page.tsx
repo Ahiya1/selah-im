@@ -19,10 +19,10 @@ import type { EngagementData, OrbEngagement } from "@/lib/types";
 // import { Contract } from '@/components/sections/Contract';
 // import { Footer } from '@/components/sections/Footer';
 
-export default function SelahHomePage() {
+export default function SelahHomePage(): JSX.Element {
   // Session tracking
   const [sessionData, setSessionData] = useState<EngagementData | null>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoaded, setIsLoaded] = useState<boolean>(false);
   const sessionStartTime = useRef<number>(Date.now());
   const maxScrollRef = useRef<number>(0);
 
@@ -53,7 +53,7 @@ export default function SelahHomePage() {
     setIsLoaded(true);
 
     // Track scroll depth
-    const handleScroll = () => {
+    const handleScroll = (): void => {
       const scrollPercent = Math.round(
         (window.scrollY /
           (document.documentElement.scrollHeight - window.innerHeight)) *
@@ -84,30 +84,34 @@ export default function SelahHomePage() {
       clearInterval(timeTracker);
       window.removeEventListener("scroll", handleScroll);
 
-      // Save session data to localStorage before unmount
-      if (sessionData) {
-        const existingSessions = JSON.parse(
-          localStorage.getItem("selah-sessions") || "[]"
-        );
-        localStorage.setItem(
-          "selah-sessions",
-          JSON.stringify([
-            ...existingSessions,
-            {
-              ...sessionData,
-              timeSpent: Math.floor(
-                (Date.now() - sessionStartTime.current) / 1000
-              ),
-              maxScroll: maxScrollRef.current,
-            },
-          ])
-        );
+      // Save session data using sessionStorage instead of localStorage for compatibility
+      if (sessionData && typeof window !== "undefined") {
+        try {
+          const existingSessions = JSON.parse(
+            sessionStorage.getItem("selah-sessions") || "[]"
+          );
+          sessionStorage.setItem(
+            "selah-sessions",
+            JSON.stringify([
+              ...existingSessions,
+              {
+                ...sessionData,
+                timeSpent: Math.floor(
+                  (Date.now() - sessionStartTime.current) / 1000
+                ),
+                maxScroll: maxScrollRef.current,
+              },
+            ])
+          );
+        } catch (error) {
+          console.warn("Failed to save session data:", error);
+        }
       }
     };
-  }, []);
+  }, [sessionData]);
 
   // Handle orb engagement
-  const handleOrbEngagement = (engagement: OrbEngagement) => {
+  const handleOrbEngagement = (engagement: OrbEngagement): void => {
     setSessionData((prev) =>
       prev
         ? {
@@ -118,6 +122,16 @@ export default function SelahHomePage() {
           }
         : null
     );
+  };
+
+  // Handle form submission
+  const handleEmailSubmit = (event: React.FormEvent<HTMLFormElement>): void => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const email = formData.get("email") as string;
+
+    // TODO: Implement email submission logic
+    console.log("Email submitted:", email);
   };
 
   // Loading state
@@ -179,7 +193,11 @@ export default function SelahHomePage() {
             </div>
 
             {/* Mobile Menu Button */}
-            <button className="md:hidden p-2 text-slate-600 hover:text-stone transition-colors">
+            <button
+              className="md:hidden p-2 text-slate-600 hover:text-stone transition-colors"
+              type="button"
+              aria-label="Open mobile menu"
+            >
               <svg
                 className="w-6 h-6"
                 fill="none"
@@ -263,7 +281,8 @@ export default function SelahHomePage() {
             {/* Breathing Orb (Placeholder - will be enhanced in Phase 2) */}
             <div className="relative mx-auto mb-8">
               <div className="w-64 h-64 mx-auto relative">
-                <div
+                <button
+                  type="button"
                   className="w-full h-full rounded-full bg-gradient-to-br from-breathing-green to-stone 
                            flex items-center justify-center text-white text-6xl cursor-pointer
                            transition-all duration-500 ease-in-out hover:scale-105
@@ -278,9 +297,10 @@ export default function SelahHomePage() {
                       breathCycles: 1,
                     })
                   }
+                  aria-label="Breathing meditation orb"
                 >
                   🧘
-                </div>
+                </button>
               </div>
 
               <p className="text-slate-600 mt-4">◦ Present</p>
@@ -457,9 +477,13 @@ export default function SelahHomePage() {
               </p>
 
               {/* Email Form (Placeholder - will be enhanced in Phase 2) */}
-              <form className="space-y-4 max-w-md mx-auto">
+              <form
+                className="space-y-4 max-w-md mx-auto"
+                onSubmit={handleEmailSubmit}
+              >
                 <input
                   type="email"
+                  name="email"
                   placeholder="your@email.com"
                   className="input-contemplative text-center"
                   required
@@ -500,7 +524,7 @@ export default function SelahHomePage() {
               <a
                 href="https://github.com/selah-im"
                 target="_blank"
-                rel="noopener"
+                rel="noopener noreferrer"
                 className="hover:text-stone transition-colors"
               >
                 Open Source

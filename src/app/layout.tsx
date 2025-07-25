@@ -5,8 +5,10 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "@/styles/globals.css";
-import { Analytics } from "@vercel/analytics/react";
-import { SpeedInsights } from "@vercel/speed-insights/next";
+
+// TODO: Add Vercel Analytics when package is installed
+// import { Analytics } from "@vercel/analytics/react";
+// import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -36,7 +38,7 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL("https://selah.im"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://selah.im"),
   alternates: {
     canonical: "/",
   },
@@ -106,7 +108,7 @@ interface RootLayoutProps {
   children: React.ReactNode;
 }
 
-export default function RootLayout({ children }: RootLayoutProps) {
+export default function RootLayout({ children }: RootLayoutProps): JSX.Element {
   return (
     <html lang="en" className={inter.variable}>
       <head>
@@ -182,11 +184,12 @@ export default function RootLayout({ children }: RootLayoutProps) {
           <main className="relative z-10">{children}</main>
         </div>
 
-        {/* Analytics - Only in production */}
+        {/* Analytics - Only in production when packages are available */}
         {process.env.NODE_ENV === "production" && (
           <>
-            <Analytics />
-            <SpeedInsights />
+            {/* TODO: Add back when @vercel/analytics is installed */}
+            {/* <Analytics /> */}
+            {/* <SpeedInsights /> */}
           </>
         )}
 
