@@ -1,23 +1,12 @@
-// src/app/page.tsx - SELAH Main Landing Page
+// src/app/page.tsx - SELAH Main Landing Page - FIXED
 // Technology that breathes with you
 // The complete contemplative experience
 
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { generateSessionMetadata, formatDuration } from "@/lib/utils";
 import type { EngagementData, OrbEngagement } from "@/lib/types";
-
-// Component imports (will be created in Phase 2)
-// import { Logo } from '@/components/ui/Logo';
-// import { BreathingOrb } from '@/components/ui/BreathingOrb';
-// import { EmailForm } from '@/components/ui/EmailForm';
-// import { Hero } from '@/components/sections/Hero';
-// import { Philosophy } from '@/components/sections/Philosophy';
-// import { OrbDemo } from '@/components/sections/OrbDemo';
-// import { Chambers } from '@/components/sections/Chambers';
-// import { Contract } from '@/components/sections/Contract';
-// import { Footer } from '@/components/sections/Footer';
 
 export default function SelahHomePage(): JSX.Element {
   // Session tracking
@@ -25,13 +14,15 @@ export default function SelahHomePage(): JSX.Element {
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
   const sessionStartTime = useRef<number>(Date.now());
   const maxScrollRef = useRef<number>(0);
+  const timeTrackerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Initialize session on mount
+  // Initialize session on mount - FIXED: Remove sessionData from dependencies
   useEffect(() => {
     const metadata = generateSessionMetadata();
+    const sessionId = metadata.sessionId;
 
-    setSessionData({
-      sessionId: metadata.sessionId,
+    const initialSessionData: EngagementData = {
+      sessionId,
       timeSpent: 0,
       maxScroll: 0,
       breathInteractions: 0,
@@ -48,8 +39,9 @@ export default function SelahHomePage(): JSX.Element {
       userAgent: metadata.userAgent,
       viewport: metadata.viewport,
       timestamp: new Date().toISOString(),
-    });
+    };
 
+    setSessionData(initialSessionData);
     setIsLoaded(true);
 
     // Track scroll depth
@@ -62,7 +54,7 @@ export default function SelahHomePage(): JSX.Element {
       maxScrollRef.current = Math.max(maxScrollRef.current, scrollPercent);
     };
 
-    // Track time spent
+    // Track time spent - FIXED: Use callback to avoid stale closure
     const timeTracker = setInterval(() => {
       const timeSpent = Math.floor(
         (Date.now() - sessionStartTime.current) / 1000
@@ -74,44 +66,51 @@ export default function SelahHomePage(): JSX.Element {
               timeSpent,
               maxScroll: maxScrollRef.current,
             }
-          : null
+          : prev
       );
     }, 1000);
 
+    timeTrackerRef.current = timeTracker;
+
     window.addEventListener("scroll", handleScroll, { passive: true });
 
+    // Cleanup function - FIXED: Don't access sessionData directly
     return () => {
-      clearInterval(timeTracker);
+      if (timeTrackerRef.current) {
+        clearInterval(timeTrackerRef.current);
+      }
       window.removeEventListener("scroll", handleScroll);
 
-      // Save session data using sessionStorage instead of localStorage for compatibility
-      if (sessionData && typeof window !== "undefined") {
+      // Save session data using sessionStorage
+      const finalTimeSpent = Math.floor(
+        (Date.now() - sessionStartTime.current) / 1000
+      );
+
+      if (typeof window !== "undefined") {
         try {
+          const finalSessionData = {
+            sessionId,
+            timeSpent: finalTimeSpent,
+            maxScroll: maxScrollRef.current,
+            timestamp: new Date().toISOString(),
+          };
+
           const existingSessions = JSON.parse(
             sessionStorage.getItem("selah-sessions") || "[]"
           );
           sessionStorage.setItem(
             "selah-sessions",
-            JSON.stringify([
-              ...existingSessions,
-              {
-                ...sessionData,
-                timeSpent: Math.floor(
-                  (Date.now() - sessionStartTime.current) / 1000
-                ),
-                maxScroll: maxScrollRef.current,
-              },
-            ])
+            JSON.stringify([...existingSessions, finalSessionData])
           );
         } catch (error) {
           console.warn("Failed to save session data:", error);
         }
       }
     };
-  }, [sessionData]);
+  }, []); // ✅ Empty dependency array - runs only once on mount
 
-  // Handle orb engagement
-  const handleOrbEngagement = (engagement: OrbEngagement): void => {
+  // Handle orb engagement - FIXED: Use useCallback to prevent unnecessary re-renders
+  const handleOrbEngagement = useCallback((engagement: OrbEngagement): void => {
     setSessionData((prev) =>
       prev
         ? {
@@ -120,21 +119,24 @@ export default function SelahHomePage(): JSX.Element {
               prev.breathInteractions + engagement.breathCycles,
             orbEngagements: [...prev.orbEngagements, engagement],
           }
-        : null
+        : prev
     );
-  };
+  }, []);
 
-  // Handle form submission
-  const handleEmailSubmit = (event: React.FormEvent<HTMLFormElement>): void => {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const email = formData.get("email") as string;
+  // Handle form submission - FIXED: Use useCallback
+  const handleEmailSubmit = useCallback(
+    (event: React.FormEvent<HTMLFormElement>): void => {
+      event.preventDefault();
+      const formData = new FormData(event.currentTarget);
+      const email = formData.get("email") as string;
 
-    // TODO: Implement email submission logic
-    console.log("Email submitted:", email);
-  };
+      // TODO: Implement email submission logic
+      console.log("Email submitted:", email);
+    },
+    []
+  );
 
-  // Loading state
+  // FIXED: Prevent hydration mismatch by not rendering until loaded
   if (!isLoaded) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -278,7 +280,7 @@ export default function SelahHomePage(): JSX.Element {
               Touch left to inhale • Touch right to exhale • Release to rest
             </p>
 
-            {/* Breathing Orb (Placeholder - will be enhanced in Phase 2) */}
+            {/* Breathing Orb */}
             <div className="relative mx-auto mb-8">
               <div className="w-64 h-64 mx-auto relative">
                 <button
@@ -476,7 +478,7 @@ export default function SelahHomePage(): JSX.Element {
                 community and receive early access to Selah.
               </p>
 
-              {/* Email Form (Placeholder - will be enhanced in Phase 2) */}
+              {/* Email Form */}
               <form
                 className="space-y-4 max-w-md mx-auto"
                 onSubmit={handleEmailSubmit}

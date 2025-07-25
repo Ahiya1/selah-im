@@ -1,14 +1,10 @@
-// src/app/layout.tsx - SELAH Root Layout
+// src/app/layout.tsx - SELAH Root Layout - FIXED
 // Technology that breathes with you
 // Sacred container for contemplative experience
 
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "@/styles/globals.css";
-
-// TODO: Add Vercel Analytics when package is installed
-// import { Analytics } from "@vercel/analytics/react";
-// import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -110,7 +106,7 @@ interface RootLayoutProps {
 
 export default function RootLayout({ children }: RootLayoutProps): JSX.Element {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en" className={inter.variable} suppressHydrationWarning>
       <head>
         {/* Preconnect to important origins */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -122,28 +118,6 @@ export default function RootLayout({ children }: RootLayoutProps): JSX.Element {
 
         {/* DNS prefetch for analytics */}
         <link rel="dns-prefetch" href="//vitals.vercel-analytics.com" />
-
-        {/* Contemplative loading script */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              // SELAH - Prepare contemplative space
-              document.documentElement.style.setProperty('--initial-load', 'true');
-              
-              // Add breathing class once fonts are loaded
-              if (document.fonts && document.fonts.ready) {
-                document.fonts.ready.then(() => {
-                  document.body.classList.add('fonts-loaded');
-                });
-              }
-              
-              // Contemplative console message
-              console.log('%cSELAH', 'font-size: 24px; color: #2d5a3d; font-weight: bold;');
-              console.log('%cTechnology that breathes with you', 'font-size: 14px; color: #4a7c59;');
-              console.log('%c\\nOpen source at: https://github.com/selah-im/selah-im', 'color: #68d391;');
-            `,
-          }}
-        />
       </head>
       <body
         className={`
@@ -155,7 +129,7 @@ export default function RootLayout({ children }: RootLayoutProps): JSX.Element {
           overflow-x-hidden
           scrollbar-hide
         `}
-        suppressHydrationWarning
+        suppressHydrationWarning={true}
       >
         {/* Main content container */}
         <div className="relative min-h-screen">
@@ -192,26 +166,6 @@ export default function RootLayout({ children }: RootLayoutProps): JSX.Element {
             {/* <SpeedInsights /> */}
           </>
         )}
-
-        {/* Service Worker Registration */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              // Register service worker for contemplative caching
-              if ('serviceWorker' in navigator && '${process.env.NODE_ENV}' === 'production') {
-                window.addEventListener('load', () => {
-                  navigator.serviceWorker.register('/sw.js')
-                    .then((registration) => {
-                      console.log('SELAH: Service Worker registered');
-                    })
-                    .catch((error) => {
-                      console.log('SELAH: Service Worker registration failed');
-                    });
-                });
-              }
-            `,
-          }}
-        />
       </body>
     </html>
   );

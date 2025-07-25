@@ -1,0 +1,20 @@
+{
+  "name": "SELAH - Technology that breathes with you",
+  "short_name": "SELAH",
+  "description": "The first contemplative technology platform",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#2d5a3d",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "32x32",
+      "type": "image/x-icon"
+    }
+  ],
+  "categories": ["lifestyle", "wellness", "productivity"],
+  "lang": "en",
+  "dir": "ltr"
+}
