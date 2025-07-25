@@ -85,7 +85,8 @@ export default function ContactPage(): JSX.Element {
             </h1>
             <p className="text-slate-600 leading-relaxed">
               Thank you for reaching out. Your message has been received and
-              will be read with contemplative attention.
+              will be read with contemplative attention. We'll respond through
+              this platform.
             </p>
           </div>
 
@@ -155,7 +156,7 @@ export default function ContactPage(): JSX.Element {
                 This is a space for genuine connection. Whether you have
                 questions about contemplative technology, feedback on the
                 experience, or ideas for collaboration—all perspectives are
-                welcomed with presence.
+                welcomed with presence. We'll respond through this platform.
               </p>
             </div>
           </div>
@@ -200,7 +201,7 @@ export default function ContactPage(): JSX.Element {
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Email
+                  Email <span className="text-slate-500">(optional)</span>
                 </label>
                 <input
                   type="email"
@@ -208,9 +209,11 @@ export default function ContactPage(): JSX.Element {
                   value={formData.email}
                   onChange={handleInputChange}
                   className="input-contemplative w-full"
-                  placeholder="your@email.com"
-                  required
+                  placeholder="your@email.com (optional)"
                 />
+                <p className="text-xs text-slate-500 mt-1">
+                  Only needed if you want us to respond privately
+                </p>
               </div>
             </div>
 
@@ -293,23 +296,15 @@ export default function ContactPage(): JSX.Element {
             </button>
           </form>
 
-          {/* Alternative Contact */}
+          {/* Information */}
           <div className="mt-8 pt-6 border-t border-slate-200">
             <div className="text-center space-y-3">
               <p className="text-slate-600 text-sm">
-                You can also reach out directly:
+                All messages are stored securely within this platform
               </p>
-              <div className="space-y-2">
-                <a
-                  href="mailto:hello@selah.im"
-                  className="inline-flex items-center space-x-2 text-stone hover:text-stone-dark transition-colors"
-                >
-                  <span>📧</span>
-                  <span>hello@selah.im</span>
-                </a>
-              </div>
               <p className="text-xs text-slate-500">
-                All messages are read with contemplative attention
+                All messages are read with contemplative attention and we
+                respond through this system
               </p>
             </div>
           </div>

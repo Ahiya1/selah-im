@@ -9,13 +9,13 @@
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
-    "db:setup": "node scripts/setup-db.js"
+    "db:setup": "echo 'Please run the SQL setup script in your Supabase dashboard'"
   },
   "dependencies": {
     "next": "^14.2.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "@vercel/postgres": "^0.8.0",
+    "@supabase/supabase-js": "^2.39.0",
     "clsx": "^2.1.0",
     "lucide-react": "^0.378.0"
   },

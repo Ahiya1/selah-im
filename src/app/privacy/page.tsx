@@ -70,6 +70,18 @@ export default function PrivacyPage(): JSX.Element {
                     <li>General usage patterns (no personal identification)</li>
                   </ul>
                 </div>
+
+                <div>
+                  <h3 className="font-semibold mb-2">Messages and Feedback</h3>
+                  <p>When you contact us through our platform, we store:</p>
+                  <ul className="list-disc ml-6 mt-2 space-y-1">
+                    <li>
+                      Your messages and feedback sent through our contact forms
+                    </li>
+                    <li>Any optional contact information you provide</li>
+                    <li>The context and timing of your communications</li>
+                  </ul>
+                </div>
               </div>
             </section>
 
@@ -81,6 +93,9 @@ export default function PrivacyPage(): JSX.Element {
                 <p>Your information is used exclusively to:</p>
                 <ul className="list-disc ml-6 space-y-2">
                   <li>Provide you with SELAH updates and early access</li>
+                  <li>
+                    Respond to your messages and feedback through our platform
+                  </li>
                   <li>Improve the contemplative technology experience</li>
                   <li>Understand how people engage with mindful technology</li>
                   <li>Ensure the platform serves consciousness effectively</li>
@@ -99,6 +114,9 @@ export default function PrivacyPage(): JSX.Element {
                   <li>❌ We don't collect unnecessary personal information</li>
                   <li>❌ We don't spam or overwhelm you with emails</li>
                   <li>❌ We don't use dark patterns or manipulative design</li>
+                  <li>
+                    ❌ We don't share your messages with anyone outside our team
+                  </li>
                 </ul>
               </div>
             </section>
@@ -110,8 +128,9 @@ export default function PrivacyPage(): JSX.Element {
               <p className="text-slate-700 leading-relaxed">
                 Your data is stored securely using industry-standard encryption
                 and security practices. We use trusted infrastructure providers
-                and implement security measures appropriate for the type of data
-                we collect.
+                (Supabase) and implement security measures appropriate for the
+                type of data we collect. All communications are encrypted and
+                access is strictly controlled.
               </p>
             </section>
 
@@ -126,17 +145,32 @@ export default function PrivacyPage(): JSX.Element {
                   <li>Request deletion of your data</li>
                   <li>Access the information we have about you</li>
                   <li>Correct any inaccurate information</li>
+                  <li>Request we stop processing your data</li>
                 </ul>
                 <p className="mt-4">
-                  To exercise these rights, contact us at{" "}
+                  To exercise these rights, contact us through our{" "}
                   <a
-                    href="mailto:privacy@selah.im"
-                    className="text-stone hover:underline"
+                    href="/contact"
+                    className="text-stone hover:underline font-medium"
                   >
-                    privacy@selah.im
-                  </a>
+                    contact form
+                  </a>{" "}
+                  or through the feedback system on our platform.
                 </p>
               </div>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold text-stone mb-4">
+                Communication Methods
+              </h2>
+              <p className="text-slate-700 leading-relaxed">
+                We communicate with users primarily through our platform's
+                built-in messaging system. This ensures all communications are
+                secure, tracked, and handled with contemplative care. For
+                important updates, we may also use the email address you
+                provided when joining our community.
+              </p>
             </section>
 
             <section className="mb-8">
@@ -145,8 +179,9 @@ export default function PrivacyPage(): JSX.Element {
               </h2>
               <p className="text-slate-700 leading-relaxed">
                 We may update this privacy policy as SELAH evolves. Any changes
-                will be communicated clearly, and we'll always maintain our
-                commitment to contemplative, respectful data practices.
+                will be communicated clearly through our platform and via email,
+                and we'll always maintain our commitment to contemplative,
+                respectful data practices.
               </p>
             </section>
 
@@ -155,20 +190,17 @@ export default function PrivacyPage(): JSX.Element {
                 Contact Us
               </h2>
               <p className="text-slate-700 leading-relaxed">
-                Questions about privacy? We're here to help. Reach out to us at{" "}
+                Questions about privacy? We're here to help. Reach out to us
+                through our{" "}
                 <a
-                  href="mailto:privacy@selah.im"
-                  className="text-stone hover:underline"
+                  href="/contact"
+                  className="text-stone hover:underline font-medium"
                 >
-                  privacy@selah.im
+                  contact form
                 </a>{" "}
-                or{" "}
-                <a
-                  href="mailto:hello@selah.im"
-                  className="text-stone hover:underline"
-                >
-                  hello@selah.im
-                </a>
+                where we can respond securely through our platform. All
+                privacy-related inquiries are handled with special care and
+                attention.
               </p>
             </section>
           </div>

@@ -1,9 +1,9 @@
-// src/app/api/feedback/route.ts - SELAH Feedback Collection API
+// src/app/api/feedback/route.ts - SELAH Feedback Collection API with Supabase
 // Technology that breathes with you
-// Real feedback and inquiries from visitors
+// Real feedback and inquiries from visitors using Supabase
 
 import { NextRequest, NextResponse } from "next/server";
-import { sql } from "@vercel/postgres";
+import { supabase, supabaseAdmin } from "../../../lib/supbase";
 import type { ApiResponse } from "@/lib/types";
 
 interface FeedbackSubmission {
@@ -75,20 +75,31 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     };
 
     // Insert feedback into database
-    const result = await sql`
-      INSERT INTO feedback (
-        type, name, email, subject, message, source, 
-        metadata, status, created_at
-      )
-      VALUES (
-        ${type}, ${name || null}, ${email || null}, 
-        ${subject || null}, ${message.trim()}, ${source},
-        ${JSON.stringify(metadata)}, 'new', NOW()
-      )
-      RETURNING id, created_at
-    `;
+    const { data: newFeedback, error: insertError } = await supabase
+      .from("feedback")
+      .insert({
+        type,
+        name: name || null,
+        email: email || null,
+        subject: subject || null,
+        message: message.trim(),
+        source,
+        metadata,
+        status: "new",
+      })
+      .select("id, created_at")
+      .single();
 
-    const newFeedback = result.rows[0];
+    if (insertError) {
+      console.error("Database insert error:", insertError);
+      const errorResponse: ApiResponse = {
+        success: false,
+        error: "Failed to submit feedback",
+        message: "An error occurred. Please try again.",
+        timestamp: new Date().toISOString(),
+      };
+      return NextResponse.json(errorResponse, { status: 500 });
+    }
 
     const response: ApiResponse<FeedbackSubmission> = {
       success: true,
@@ -159,53 +170,40 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const status = searchParams.get("status");
     const offset = (page - 1) * limit;
 
-    // Build query conditions
-    let whereConditions: string[] = [];
-    let queryParams: any[] = [limit, offset];
-    let paramIndex = 3;
+    // Build query
+    let query = supabaseAdmin
+      .from("feedback")
+      .select(
+        "id, type, name, email, subject, message, source, metadata, status, created_at",
+        { count: "exact" }
+      )
+      .order("created_at", { ascending: false })
+      .range(offset, offset + limit - 1);
 
     if (type) {
-      whereConditions.push(`type = $${paramIndex}`);
-      queryParams.push(type);
-      paramIndex++;
+      query = query.eq("type", type);
     }
 
     if (status) {
-      whereConditions.push(`status = $${paramIndex}`);
-      queryParams.push(status);
-      paramIndex++;
+      query = query.eq("status", status);
     }
 
-    const whereClause =
-      whereConditions.length > 0
-        ? `WHERE ${whereConditions.join(" AND ")}`
-        : "";
+    const { data: feedback, error, count } = await query;
 
-    // Get feedback with pagination
-    const feedbackResult = await sql.query(
-      `
-      SELECT id, type, name, email, subject, message, source, 
-             metadata, status, created_at
-      FROM feedback 
-      ${whereClause}
-      ORDER BY created_at DESC 
-      LIMIT $1 OFFSET $2
-    `,
-      queryParams
-    );
+    if (error) {
+      console.error("Database query error:", error);
+      const errorResponse: ApiResponse = {
+        success: false,
+        error: "Failed to retrieve feedback",
+        message: "An error occurred while fetching feedback",
+        timestamp: new Date().toISOString(),
+      };
+      return NextResponse.json(errorResponse, { status: 500 });
+    }
 
-    // Get total count
-    const countParams = queryParams.slice(2); // Remove limit and offset
-    const countResult = await sql.query(
-      `
-      SELECT COUNT(*) as total FROM feedback ${whereClause}
-    `,
-      countParams
-    );
+    const total = count || 0;
 
-    const total = parseInt(countResult.rows[0].total);
-
-    const feedback: FeedbackSubmission[] = feedbackResult.rows.map((row) => ({
+    const formattedFeedback: FeedbackSubmission[] = feedback.map((row) => ({
       id: row.id.toString(),
       type: row.type,
       name: row.name,
@@ -222,7 +220,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const response: ApiResponse = {
       success: true,
       data: {
-        feedback,
+        feedback: formattedFeedback,
         pagination: {
           page,
           limit,
@@ -286,11 +284,20 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
     }
 
     // Update feedback status
-    await sql`
-      UPDATE feedback 
-      SET status = ${status}, updated_at = NOW()
-      WHERE id = ${id}
-    `;
+    const { error: updateError } = await supabaseAdmin
+      .from("feedback")
+      .update({ status, updated_at: new Date().toISOString() })
+      .eq("id", id);
+
+    if (updateError) {
+      console.error("Database update error:", updateError);
+      const errorResponse: ApiResponse = {
+        success: false,
+        error: "Failed to update feedback",
+        timestamp: new Date().toISOString(),
+      };
+      return NextResponse.json(errorResponse, { status: 500 });
+    }
 
     const response: ApiResponse = {
       success: true,

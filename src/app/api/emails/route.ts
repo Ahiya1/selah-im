@@ -1,9 +1,9 @@
-// src/app/api/emails/route.ts - SELAH Real Email Collection API
+// src/app/api/emails/route.ts - SELAH Email Collection API with Supabase
 // Technology that breathes with you
-// Actual email storage and validation
+// Real email storage and validation using Supabase
 
 import { NextRequest, NextResponse } from "next/server";
-import { sql } from "@vercel/postgres";
+import { supabase, supabaseAdmin } from "../../../lib/supbase";
 import type { EmailSubmission, ApiResponse } from "@/lib/types";
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
@@ -26,18 +26,31 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const cleanEmail = email.trim().toLowerCase();
 
     // Check if email already exists
-    const existingEmail = await sql`
-      SELECT id, created_at FROM emails 
-      WHERE email = ${cleanEmail}
-    `;
+    const { data: existingEmail, error: checkError } = await supabase
+      .from("emails")
+      .select("id, created_at")
+      .eq("email", cleanEmail)
+      .single();
 
-    if (existingEmail.rows.length > 0) {
+    if (checkError && checkError.code !== "PGRST116") {
+      // PGRST116 = no rows found
+      console.error("Database check error:", checkError);
+      const errorResponse: ApiResponse = {
+        success: false,
+        error: "Database error",
+        message: "An error occurred. Please try again.",
+        timestamp: new Date().toISOString(),
+      };
+      return NextResponse.json(errorResponse, { status: 500 });
+    }
+
+    if (existingEmail) {
       const response: ApiResponse<EmailSubmission> = {
         success: true,
         data: {
-          id: existingEmail.rows[0].id.toString(),
+          id: existingEmail.id.toString(),
           email: cleanEmail,
-          timestamp: existingEmail.rows[0].created_at,
+          timestamp: existingEmail.created_at,
           source,
           validated: true,
         },
@@ -65,13 +78,26 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     };
 
     // Insert new email
-    const result = await sql`
-      INSERT INTO emails (email, source, engagement_data, created_at)
-      VALUES (${cleanEmail}, ${source}, ${JSON.stringify(engagementData)}, NOW())
-      RETURNING id, created_at
-    `;
+    const { data: newEmail, error: insertError } = await supabase
+      .from("emails")
+      .insert({
+        email: cleanEmail,
+        source,
+        engagement_data: engagementData,
+      })
+      .select("id, created_at")
+      .single();
 
-    const newEmail = result.rows[0];
+    if (insertError) {
+      console.error("Database insert error:", insertError);
+      const errorResponse: ApiResponse = {
+        success: false,
+        error: "Failed to submit email",
+        message: "An error occurred. Please try again.",
+        timestamp: new Date().toISOString(),
+      };
+      return NextResponse.json(errorResponse, { status: 500 });
+    }
 
     const response: ApiResponse<EmailSubmission> = {
       success: true,
@@ -135,38 +161,35 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const source = searchParams.get("source");
     const offset = (page - 1) * limit;
 
-    // Build query conditions
-    let whereClause = "";
-    let queryParams: any[] = [limit, offset];
+    // Build query
+    let query = supabaseAdmin
+      .from("emails")
+      .select("id, email, source, engagement_data, created_at", {
+        count: "exact",
+      })
+      .order("created_at", { ascending: false })
+      .range(offset, offset + limit - 1);
 
     if (source) {
-      whereClause = "WHERE source = $3";
-      queryParams.push(source);
+      query = query.eq("source", source);
     }
 
-    // Get emails with pagination
-    const emailsResult = await sql.query(
-      `
-      SELECT id, email, source, engagement_data, created_at
-      FROM emails 
-      ${whereClause}
-      ORDER BY created_at DESC 
-      LIMIT $1 OFFSET $2
-    `,
-      queryParams
-    );
+    const { data: emails, error, count } = await query;
 
-    // Get total count
-    const countResult = await sql.query(
-      `
-      SELECT COUNT(*) as total FROM emails ${whereClause}
-    `,
-      source ? [source] : []
-    );
+    if (error) {
+      console.error("Database query error:", error);
+      const errorResponse: ApiResponse = {
+        success: false,
+        error: "Failed to retrieve emails",
+        message: "An error occurred while fetching emails",
+        timestamp: new Date().toISOString(),
+      };
+      return NextResponse.json(errorResponse, { status: 500 });
+    }
 
-    const total = parseInt(countResult.rows[0].total);
+    const total = count || 0;
 
-    const emails: EmailSubmission[] = emailsResult.rows.map((row) => ({
+    const formattedEmails: EmailSubmission[] = emails.map((row) => ({
       id: row.id.toString(),
       email: row.email,
       timestamp: row.created_at,
@@ -178,7 +201,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const response: ApiResponse = {
       success: true,
       data: {
-        emails,
+        emails: formattedEmails,
         pagination: {
           page,
           limit,

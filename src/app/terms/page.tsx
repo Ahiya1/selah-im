@@ -71,6 +71,7 @@ export default function TermsPage(): JSX.Element {
                   </li>
                   <li>A community focused on mindful technology use</li>
                   <li>Educational content about contemplative practices</li>
+                  <li>Secure messaging and feedback systems</li>
                 </ul>
               </div>
             </section>
@@ -89,7 +90,29 @@ export default function TermsPage(): JSX.Element {
                   <li>Provide accurate information when requested</li>
                   <li>Not use the service for harmful or illegal purposes</li>
                   <li>Not attempt to abuse or misuse the technology</li>
+                  <li>
+                    Use our communication systems respectfully and appropriately
+                  </li>
                 </ul>
+              </div>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold text-stone mb-4">
+                Communication and Support
+              </h2>
+              <div className="text-slate-700 space-y-4">
+                <p>
+                  We provide support and handle inquiries through our built-in
+                  platform messaging systems. This ensures secure, tracked, and
+                  contemplative communication between us and our users.
+                </p>
+                <p>
+                  All support requests, feedback, and general inquiries should
+                  be submitted through our contact forms or platform messaging
+                  features. We respond to all legitimate inquiries with care and
+                  attention.
+                </p>
               </div>
             </section>
 
@@ -153,11 +176,15 @@ export default function TermsPage(): JSX.Element {
               </h2>
               <p className="text-slate-700 leading-relaxed">
                 Your privacy is important to us. Please review our{" "}
-                <a href="/privacy" className="text-stone hover:underline">
+                <a
+                  href="/privacy"
+                  className="text-stone hover:underline font-medium"
+                >
                   Privacy Policy
                 </a>{" "}
                 to understand how we handle your information with contemplative
-                care.
+                care. All data is stored securely and communication happens
+                through our secure platform systems.
               </p>
             </section>
 
@@ -179,7 +206,8 @@ export default function TermsPage(): JSX.Element {
               </h2>
               <p className="text-slate-700 leading-relaxed">
                 We may update these terms as SELAH evolves. Significant changes
-                will be communicated clearly, and continued use of the service
+                will be communicated clearly through our platform messaging
+                systems and via email, and continued use of the service
                 constitutes acceptance of updated terms.
               </p>
             </section>
@@ -202,20 +230,15 @@ export default function TermsPage(): JSX.Element {
               </h2>
               <p className="text-slate-700 leading-relaxed">
                 Questions about these terms? We're here to help with clarity and
-                understanding. Contact us at{" "}
+                understanding. Contact us through our{" "}
                 <a
-                  href="mailto:legal@selah.im"
-                  className="text-stone hover:underline"
+                  href="/contact"
+                  className="text-stone hover:underline font-medium"
                 >
-                  legal@selah.im
+                  secure contact form
                 </a>{" "}
-                or{" "}
-                <a
-                  href="mailto:hello@selah.im"
-                  className="text-stone hover:underline"
-                >
-                  hello@selah.im
-                </a>
+                where we can respond directly through our platform. All legal
+                and terms-related inquiries are handled with care and attention.
               </p>
             </section>
           </div>

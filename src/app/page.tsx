@@ -1052,10 +1052,7 @@ export default function SelahHomePage(): JSX.Element {
             </p>
 
             <div className="flex justify-center space-x-8 text-slate-600">
-              <a
-                href="mailto:hello@selah.im"
-                className="hover:text-stone transition-colors"
-              >
+              <a href="/contact" className="hover:text-stone transition-colors">
                 Contact
               </a>
               <a
