@@ -1,34 +1,539 @@
 /* SELAH Global Styles - Technology that breathes with you */
+/* Rock-like aesthetic with breathing animations */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Custom CSS Variables for Contemplative Design */
+/* CSS Custom Properties for Contemplative Design */
 :root {
+  /* Stone Colors - Selah = סלע = Rock */
   --stone: #2d5a3d;
   --stone-light: #4a7c59;
+  --stone-lighter: #6b8e6b;
+  --stone-dark: #1a3322;
+
+  /* Breathing Colors - Technology that breathes */
   --breathing-green: #68d391;
   --breathing-blue: #4299e1;
   --breathing-pink: #ed64a6;
+  --breathing-gold: #f6ad55;
+
+  /* Background Gradients */
+  --bg-primary: linear-gradient(135deg, #f8fafc 0%, #ecfdf5 100%);
+  --bg-secondary: linear-gradient(135deg, #f1f5f9 0%, #e6fffa 100%);
+  --bg-tertiary: linear-gradient(135deg, #e2e8f0 0%, #d1fae5 100%);
+
+  /* Glass Effects */
+  --glass-light: rgba(255, 255, 255, 0.7);
+  --glass-medium: rgba(255, 255, 255, 0.5);
+  --glass-subtle: rgba(255, 255, 255, 0.3);
+
+  /* Shadows - Rock-like depth */
+  --shadow-stone: 0 20px 40px rgba(45, 90, 61, 0.1);
+  --shadow-stone-lg: 0 30px 60px rgba(45, 90, 61, 0.15);
+  --shadow-breathing: 0 0 40px rgba(104, 211, 145, 0.4);
+
+  /* Typography Scale */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+  --text-5xl: 3rem;
+
+  /* Spacing Scale - Contemplative proportions */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-24: 6rem;
+  --space-32: 8rem;
+
+  /* Border Radius - Organic curves */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-3xl: 2rem;
+
+  /* Transition Durations - Contemplative timing */
+  --duration-fast: 0.15s;
+  --duration-normal: 0.3s;
+  --duration-slow: 0.5s;
+  --duration-breathing: 6s;
 }
 
-/* Base styles for contemplative aesthetics */
+/* Base Layer - Foundational styles */
 @layer base {
+  /* Reset and normalize */
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 2rem;
+  }
+
   body {
     @apply bg-gradient-to-br from-slate-50 to-emerald-50;
     @apply text-slate-800;
-    @apply font-sans;
+    @apply font-inter;
+    @apply leading-relaxed;
+    @apply selection:bg-stone/20;
+    @apply selection:text-stone-dark;
+
+    /* Prevent text size adjust on mobile */
+    -webkit-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+
+    /* Smooth font rendering */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+
+    /* Hide scrollbar but keep functionality */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  body::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Typography - Contemplative hierarchy */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply text-balance;
+    @apply font-semibold;
+    @apply text-slate-900;
+  }
+
+  h1 {
+    @apply text-4xl md:text-5xl;
+    @apply leading-tight;
+    @apply tracking-tight;
+  }
+
+  h2 {
+    @apply text-3xl md:text-4xl;
+    @apply leading-tight;
+  }
+
+  h3 {
+    @apply text-2xl md:text-3xl;
+    @apply leading-snug;
+  }
+
+  h4 {
+    @apply text-xl md:text-2xl;
+    @apply leading-snug;
+  }
+
+  p {
+    @apply text-pretty;
+    @apply leading-relaxed;
+  }
+
+  /* Focus styles - Contemplative attention */
+  :focus {
+    @apply outline-none;
+    @apply ring-2;
+    @apply ring-stone/30;
+    @apply ring-offset-2;
+    @apply ring-offset-white;
+  }
+
+  /* Interactive elements */
+  button,
+  a,
+  [role="button"] {
+    @apply transition-all;
+    @apply duration-300;
+    @apply ease-out;
+  }
+
+  /* Improved tap targets for mobile */
+  button,
+  a,
+  [role="button"],
+  input,
+  textarea,
+  select {
+    min-height: 44px;
+    min-width: 44px;
   }
 }
 
-/* Component layer for reusable patterns */
+/* Component Layer - Reusable patterns */
 @layer components {
-  .breathing-animation {
+  /* Typography Components */
+  .text-stone-title {
+    @apply text-stone;
+    @apply font-semibold;
+    @apply tracking-wide;
+    @apply animate-breathe;
+  }
+
+  .text-breathing {
+    background: linear-gradient(
+      135deg,
+      var(--breathing-green) 0%,
+      var(--breathing-blue) 50%,
+      var(--breathing-pink) 100%
+    );
+    background-size: 200% 200%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: breathing-gradient 8s ease-in-out infinite;
+  }
+
+  /* Button Components */
+  .btn-stone {
+    @apply inline-flex items-center justify-center;
+    @apply px-6 py-3;
+    @apply bg-stone text-white;
+    @apply font-medium;
+    @apply rounded-xl;
+    @apply transition-all duration-300;
+    @apply hover:bg-stone-dark;
+    @apply hover:scale-105;
+    @apply hover:shadow-lg;
+    @apply active:scale-95;
+    @apply focus:ring-2 focus:ring-stone/30;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply disabled:hover:scale-100;
+  }
+
+  .btn-breathing {
+    @apply btn-stone;
+    background: linear-gradient(135deg, var(--breathing-green), var(--stone));
+    @apply animate-breathe-slow;
+
+    &:hover {
+      background: linear-gradient(
+        135deg,
+        var(--breathing-blue),
+        var(--stone-dark)
+      );
+      transform: scale(1.05) translateY(-2px);
+      box-shadow: var(--shadow-breathing);
+    }
+  }
+
+  /* Card Components */
+  .card-glass {
+    @apply bg-white/70;
+    @apply backdrop-blur-md;
+    @apply border border-white/30;
+    @apply rounded-2xl;
+    @apply shadow-lg;
+    @apply transition-all duration-500;
+
+    &:hover {
+      @apply bg-white/80;
+      @apply shadow-xl;
+      @apply scale-[1.02];
+    }
+  }
+
+  .card-stone {
+    @apply card-glass;
+    @apply border-stone/20;
+    box-shadow: var(--shadow-stone);
+
+    &:hover {
+      box-shadow: var(--shadow-stone-lg);
+    }
+  }
+
+  /* Form Components */
+  .input-contemplative {
+    @apply w-full;
+    @apply px-4 py-3;
+    @apply bg-white/70;
+    @apply backdrop-blur-md;
+    @apply border border-white/30;
+    @apply rounded-xl;
+    @apply text-slate-800;
+    @apply placeholder:text-slate-500;
+    @apply transition-all duration-300;
+    @apply focus:bg-white/90;
+    @apply focus:border-stone/50;
+    @apply focus:ring-2 focus:ring-stone/20;
+  }
+
+  /* Layout Components */
+  .container-contemplative {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .section-breathing {
+    @apply py-16 md:py-24;
+    @apply px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Loading States */
+  .loading-stone {
+    @apply animate-pulse;
+    @apply bg-stone/20;
+    @apply rounded-lg;
+  }
+
+  /* Accessibility */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* Scrollbar styling for specific elements */
+  .scrollbar-contemplative {
+    scrollbar-width: thin;
+    scrollbar-color: var(--stone-light) transparent;
+  }
+
+  .scrollbar-contemplative::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .scrollbar-contemplative::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-contemplative::-webkit-scrollbar-thumb {
+    background-color: var(--stone-light);
+    border-radius: 3px;
+  }
+}
+
+/* Utility Layer - Custom utilities */
+@layer utilities {
+  /* Breathing Animations */
+  .animate-breathe {
     animation: breathe 6s ease-in-out infinite;
   }
-  
-  @keyframes breathe {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.03); }
+
+  .animate-breathe-slow {
+    animation: breathe 8s ease-in-out infinite;
+  }
+
+  .animate-breathe-fast {
+    animation: breathe 4s ease-in-out infinite;
+  }
+
+  /* Float Animation */
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  /* Gradient Animation */
+  .animate-gradient {
+    animation: breathing-gradient 8s ease-in-out infinite;
+    background-size: 200% 200%;
+  }
+
+  /* Text Balance */
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .text-pretty {
+    text-wrap: pretty;
+  }
+
+  /* Custom Backdrop Blur */
+  .backdrop-blur-contemplative {
+    backdrop-filter: blur(12px) saturate(180%);
+  }
+
+  /* Hide scrollbar */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Glass morphism effect */
+  .glass-morphism {
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+  }
+
+  /* Stone texture effect */
+  .texture-stone {
+    background-image:
+      radial-gradient(
+        circle at 20% 50%,
+        rgba(45, 90, 61, 0.05) 0%,
+        transparent 50%
+      ),
+      radial-gradient(
+        circle at 80% 20%,
+        rgba(45, 90, 61, 0.03) 0%,
+        transparent 50%
+      ),
+      radial-gradient(
+        circle at 40% 80%,
+        rgba(45, 90, 61, 0.04) 0%,
+        transparent 50%
+      );
+  }
+}
+
+/* Keyframe Animations */
+@keyframes breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.03);
+    opacity: 1;
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes breathing-gradient {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes pulse-stone {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(45, 90, 61, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 20px rgba(45, 90, 61, 0);
+  }
+}
+
+/* Print Styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  .card-glass,
+  .card-stone {
+    background: white !important;
+    border: 1px solid #ccc !important;
+    box-shadow: none !important;
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .animate-breathe,
+  .animate-breathe-slow,
+  .animate-breathe-fast,
+  .animate-float,
+  .animate-gradient {
+    animation: none !important;
+  }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  :root {
+    --stone: #000000;
+    --stone-light: #333333;
+    --breathing-green: #006400;
+    --breathing-blue: #000080;
+    --breathing-pink: #800080;
+  }
+
+  .card-glass,
+  .card-stone {
+    border: 2px solid var(--stone) !important;
+    background: white !important;
+  }
+}
+
+/* Dark Mode Support (for future) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --stone: #4a7c59;
+    --stone-light: #6b8e6b;
+    --stone-dark: #2d5a3d;
+  }
+}
+
+/* Font Loading States */
+.fonts-loading {
+  visibility: hidden;
+}
+
+.fonts-loaded {
+  visibility: visible;
+}
+
+/* Smooth entrance animation for the whole page */
+body.fonts-loaded {
+  animation: page-enter 0.8s ease-out;
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
