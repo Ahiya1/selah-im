@@ -7,14 +7,6 @@
 import React, { useState } from "react";
 import type { Metadata } from "next";
 
-// Note: This is a client component, so metadata should be handled in layout or moved to a server component
-// export const metadata: Metadata = {
-//   title: "Contact - SELAH",
-//   description: "Connect with SELAH. Share your thoughts, questions, or insights about contemplative technology.",
-// };
-
-("use client");
-
 interface ContactFormData {
   type: "question" | "feedback" | "contact" | "collaboration";
   name: string;
