@@ -1,9 +1,88 @@
-// src/lib/types.ts - SELAH TypeScript Definitions
+// src/lib/types.ts - SELAH Enhanced TypeScript Definitions
 // Technology that breathes with you
-// Type-safe contemplative data structures
+// Type-safe contemplative data structures with Claude AI integration
 
 // ============================================================================
-// EMAIL COLLECTION TYPES
+// CLAUDE AI INTEGRATION TYPES
+// ============================================================================
+
+export interface ClaudeStreamRequest {
+  userContext: string;
+  section: "recognition" | "chambers" | "philosophy" | "invitation";
+  templateStructure?: any;
+  sessionData?: EngagementData;
+}
+
+export interface ClaudeStreamResponse {
+  success: boolean;
+  data?: string;
+  error?: string;
+  rateLimited?: boolean;
+  fallbackUsed?: boolean;
+  timestamp: string;
+}
+
+export interface RateLimitState {
+  userId: string;
+  requestCount: number;
+  lastRequest: string;
+  isBlocked: boolean;
+  resetTime: string;
+}
+
+export interface PersonalizationContext {
+  userBackground:
+    | "therapist"
+    | "developer"
+    | "curious"
+    | "meditation"
+    | "unknown";
+  keywords: string[];
+  tone: "therapeutic" | "technical" | "exploratory" | "general";
+  experience: "beginner" | "intermediate" | "advanced";
+}
+
+// ============================================================================
+// BUBBLE NAVIGATION TYPES
+// ============================================================================
+
+export interface BubbleConfig {
+  id: string;
+  title: string;
+  color: "green" | "orange" | "purple" | "blue";
+  component: React.ComponentType<BubbleProps>;
+  order: number;
+  requiresContext?: boolean;
+}
+
+export interface BubbleProps {
+  userContext: string;
+  useAI: boolean;
+  sessionData: EngagementData | null;
+  onBreathingInteraction: () => void;
+  onNavigateNext?: () => void;
+  onNavigatePrev?: () => void;
+  onComplete?: () => void;
+}
+
+export interface BubbleContainerState {
+  currentBubble: number;
+  totalBubbles: number;
+  isTransitioning: boolean;
+  transitionDirection: "forward" | "backward" | null;
+  completedBubbles: number[];
+}
+
+export interface BubbleTransition {
+  from: number;
+  to: number;
+  direction: "forward" | "backward";
+  duration: number;
+  easing: string;
+}
+
+// ============================================================================
+// ORIGINAL EMAIL COLLECTION TYPES (Enhanced)
 // ============================================================================
 
 export interface EmailSubmission {
@@ -13,13 +92,16 @@ export interface EmailSubmission {
   source: EmailSource;
   validated: boolean;
   engagement?: EngagementData;
+  aiPersonalized?: boolean;
+  contextProvided?: boolean;
 }
 
 export type EmailSource =
   | "landing-page"
+  | "bubble-journey"
   | "orb-interaction"
-  | "contract-section"
-  | "chambers-demo";
+  | "chambers-demo"
+  | "ai-personalized";
 
 export interface EmailValidationResult {
   isValid: boolean;
@@ -28,13 +110,13 @@ export interface EmailValidationResult {
 }
 
 // ============================================================================
-// ENGAGEMENT ANALYTICS TYPES
+// ENGAGEMENT ANALYTICS TYPES (Enhanced)
 // ============================================================================
 
 export interface EngagementData {
   sessionId: string;
   timeSpent: number; // seconds
-  maxScroll: number; // percentage
+  maxScroll: number; // percentage (deprecated for bubbles)
   breathInteractions: number;
   orbEngagements: OrbEngagement[];
   pageViews: PageView[];
@@ -44,6 +126,16 @@ export interface EngagementData {
     height: number;
   };
   timestamp: string;
+  bubbleJourney?: BubbleJourneyData;
+}
+
+export interface BubbleJourneyData {
+  bubblesVisited: number[];
+  timeInEachBubble: Record<number, number>;
+  aiInteractions: number;
+  contextProvided: boolean;
+  completedJourney: boolean;
+  exitPoint?: number;
 }
 
 export interface OrbEngagement {
@@ -53,6 +145,7 @@ export interface OrbEngagement {
   actions: OrbAction[];
   totalDuration: number;
   breathCycles: number;
+  bubbleContext?: number; // Which bubble the orb was in
 }
 
 export interface OrbAction {
@@ -69,20 +162,22 @@ export interface PageView {
   path: string;
   timestamp: string;
   timeSpent: number;
-  scrollDepth: number;
+  scrollDepth: number; // deprecated for bubbles
   interactions: string[];
+  bubbleId?: string;
 }
 
 // ============================================================================
-// UI COMPONENT TYPES
+// UI COMPONENT TYPES (Enhanced)
 // ============================================================================
 
 export interface BreathingOrbProps {
   size?: "small" | "medium" | "large";
-  variant?: "default" | "demo" | "meditation";
+  variant?: "default" | "demo" | "meditation" | "bubble";
   onEngagement?: (engagement: OrbEngagement) => void;
   className?: string;
   disabled?: boolean;
+  bubbleContext?: number;
 }
 
 export interface BreathingOrbState {
@@ -96,10 +191,11 @@ export interface BreathingOrbState {
 export interface EmailFormProps {
   onSubmit?: (submission: EmailSubmission) => void;
   onValidation?: (result: EmailValidationResult) => void;
-  variant?: "default" | "inline" | "modal";
+  variant?: "default" | "inline" | "modal" | "bubble";
   placeholder?: string;
   className?: string;
   disabled?: boolean;
+  showAIAttribution?: boolean;
 }
 
 export interface EmailFormState {
@@ -110,8 +206,28 @@ export interface EmailFormState {
   validationResult: EmailValidationResult | null;
 }
 
+export interface StreamingTextProps {
+  content?: any;
+  userContext?: string;
+  useAI?: boolean;
+  className?: string;
+  section?: "recognition" | "chambers" | "philosophy" | "invitation";
+  onStreamComplete?: () => void;
+  bubbleId?: string;
+  fallbackContent?: string;
+}
+
+export interface StreamingTextState {
+  displayedWords: string[];
+  isStreaming: boolean;
+  streamingComplete: boolean;
+  contentToStream: string;
+  isAIGenerated: boolean;
+  rateLimited: boolean;
+}
+
 // ============================================================================
-// NAVIGATION AND ROUTING TYPES
+// NAVIGATION AND ROUTING TYPES (Enhanced for Bubbles)
 // ============================================================================
 
 export interface NavigationItem {
@@ -119,24 +235,52 @@ export interface NavigationItem {
   href: string;
   external?: boolean;
   description?: string;
+  bubbleId?: string;
 }
 
-export interface SectionRef {
+export interface BubbleRef {
   id: string;
   title: string;
   element: HTMLElement | null;
   inView: boolean;
+  completed: boolean;
+  aiPersonalized: boolean;
 }
 
 // ============================================================================
-// ADMIN DASHBOARD TYPES
+// ADMIN DASHBOARD TYPES (Enhanced)
 // ============================================================================
 
 export interface AdminDashboardData {
   emails: EmailSubmission[];
   analytics: AnalyticsSummary;
+  aiUsage: AIUsageSummary;
+  rateLimiting: RateLimitingSummary;
   exportData: ExportData;
   lastUpdated: string;
+}
+
+export interface AIUsageSummary {
+  totalAIRequests: number;
+  successfulRequests: number;
+  rateLimitedRequests: number;
+  fallbackUsed: number;
+  averageResponseTime: number;
+  costEstimate: number;
+  topContextTypes: Array<{
+    type: PersonalizationContext["userBackground"];
+    count: number;
+  }>;
+}
+
+export interface RateLimitingSummary {
+  totalUniqueUsers: number;
+  blockedRequests: number;
+  allowedRequests: number;
+  topBlockedIPs: Array<{
+    ip: string;
+    attempts: number;
+  }>;
 }
 
 export interface AnalyticsSummary {
@@ -144,6 +288,8 @@ export interface AnalyticsSummary {
   totalSessions: number;
   averageTimeSpent: number;
   totalOrbInteractions: number;
+  bubbleCompletionRates: Record<number, number>;
+  aiPersonalizationRate: number;
   topSources: Array<{
     source: EmailSource;
     count: number;
@@ -159,6 +305,8 @@ export interface DailyStats {
   sessions: number;
   avgTimeSpent: number;
   orbInteractions: number;
+  aiRequests: number;
+  bubbleCompletions: number;
 }
 
 export interface EngagementTrend {
@@ -170,7 +318,7 @@ export interface EngagementTrend {
 
 export interface ExportData {
   format: "csv" | "json";
-  data: EmailSubmission[] | AnalyticsSummary;
+  data: EmailSubmission[] | AnalyticsSummary | AIUsageSummary;
   filename: string;
   size: number;
 }
@@ -194,7 +342,7 @@ export interface LoginAttempt {
 }
 
 // ============================================================================
-// CHAMBER TYPES (Future-proofing)
+// CHAMBER TYPES (Enhanced for Bubble Preview)
 // ============================================================================
 
 export interface ChamberInfo {
@@ -207,6 +355,7 @@ export interface ChamberInfo {
   features: string[];
   color: string;
   backgroundColor: string;
+  bubblePreview?: React.ComponentType;
 }
 
 export interface MeditationSession {
@@ -218,6 +367,7 @@ export interface MeditationSession {
   quality?: "poor" | "fair" | "good" | "excellent";
   notes?: string;
   orbEngagements: OrbEngagement[];
+  bubbleContext?: number;
 }
 
 export interface ContemplativeQuestion {
@@ -227,6 +377,7 @@ export interface ContemplativeQuestion {
   timestamp: string;
   reflections: Reflection[];
   tags?: string[];
+  personalizedContext?: PersonalizationContext;
 }
 
 export interface Reflection {
@@ -239,7 +390,7 @@ export interface Reflection {
 }
 
 // ============================================================================
-// STORAGE TYPES
+// STORAGE TYPES (Enhanced)
 // ============================================================================
 
 export interface LocalStorageData {
@@ -247,6 +398,8 @@ export interface LocalStorageData {
   analytics: EngagementData[];
   sessions: AdminSession[];
   preferences: UserPreferences;
+  rateLimitState: RateLimitState;
+  bubbleProgress: BubbleJourneyData;
   version: string;
   lastSync: string;
 }
@@ -258,10 +411,12 @@ export interface UserPreferences {
   analytics: boolean;
   orbSensitivity: "low" | "medium" | "high";
   breathingSpeed: "slow" | "normal" | "fast";
+  aiPersonalization: boolean;
+  bubbleTransitions: "smooth" | "instant";
 }
 
 // ============================================================================
-// API RESPONSE TYPES
+// API RESPONSE TYPES (Enhanced)
 // ============================================================================
 
 export interface ApiResponse<T = any> {
@@ -270,11 +425,14 @@ export interface ApiResponse<T = any> {
   error?: string;
   message?: string;
   timestamp: string;
+  rateLimited?: boolean;
+  aiGenerated?: boolean;
 }
 
 export interface EmailSubmissionResponse extends ApiResponse<EmailSubmission> {
   duplicate?: boolean;
   suggestions?: string[];
+  aiPersonalized?: boolean;
 }
 
 export interface AnalyticsResponse extends ApiResponse<AnalyticsSummary> {
@@ -282,16 +440,34 @@ export interface AnalyticsResponse extends ApiResponse<AnalyticsSummary> {
   cacheExpiry?: string;
 }
 
+export interface ClaudeAPIResponse extends ApiResponse<string> {
+  tokens?: {
+    input: number;
+    output: number;
+  };
+  model?: string;
+  rateLimited?: boolean;
+  fallbackUsed?: boolean;
+}
+
 // ============================================================================
-// ERROR TYPES
+// ERROR TYPES (Enhanced)
 // ============================================================================
 
 export interface SelahError extends Error {
   code: string;
-  type: "validation" | "network" | "storage" | "auth" | "unknown";
+  type:
+    | "validation"
+    | "network"
+    | "storage"
+    | "auth"
+    | "rate-limit"
+    | "ai"
+    | "unknown";
   context?: Record<string, any>;
   userMessage?: string;
   timestamp: string;
+  retryable?: boolean;
 }
 
 export interface ErrorBoundaryState {
@@ -321,7 +497,7 @@ export interface FormState<T extends Record<string, any>> {
 }
 
 // ============================================================================
-// ANIMATION TYPES
+// ANIMATION TYPES (Enhanced for Bubbles)
 // ============================================================================
 
 export interface AnimationConfig {
@@ -341,6 +517,13 @@ export interface BreathingAnimationConfig extends AnimationConfig {
     exhale: string;
     still: string;
   };
+}
+
+export interface BubbleAnimationConfig extends AnimationConfig {
+  entryAnimation: "fade" | "scale" | "slide";
+  exitAnimation: "fade" | "scale" | "slide";
+  transitionAnimation: "morph" | "fade" | "slide";
+  breathingEffect: boolean;
 }
 
 // ============================================================================
@@ -364,7 +547,7 @@ export type Milliseconds = number;
 export type Seconds = number;
 
 // ============================================================================
-// COMPONENT PROP TYPES
+// COMPONENT PROP TYPES (Enhanced)
 // ============================================================================
 
 export interface BaseComponentProps {
@@ -388,6 +571,15 @@ export interface ContainerComponentProps extends BaseComponentProps {
   size?: "small" | "medium" | "large";
 }
 
+export interface BubbleComponentProps extends BaseComponentProps {
+  bubbleId: string;
+  isActive: boolean;
+  isComplete: boolean;
+  color: "green" | "orange" | "purple" | "blue";
+  onActivate?: () => void;
+  onComplete?: () => void;
+}
+
 // ============================================================================
 // CONSTANTS TYPES
 // ============================================================================
@@ -397,9 +589,10 @@ export type BreathingState = (typeof BREATHING_STATES)[number];
 
 export const EMAIL_SOURCES = [
   "landing-page",
+  "bubble-journey",
   "orb-interaction",
-  "contract-section",
   "chambers-demo",
+  "ai-personalized",
 ] as const;
 
 export const CHAMBER_IDS = [
@@ -409,5 +602,22 @@ export const CHAMBER_IDS = [
   "being-seen",
 ] as const;
 
+export const BUBBLE_COLORS = ["green", "orange", "purple", "blue"] as const;
+export type BubbleColor = (typeof BUBBLE_COLORS)[number];
+
 export const ADMIN_ROLES = ["admin", "viewer"] as const;
 export type AdminRole = (typeof ADMIN_ROLES)[number];
+
+export const PERSONALIZATION_BACKGROUNDS = [
+  "therapist",
+  "developer",
+  "curious",
+  "meditation",
+  "unknown",
+] as const;
+
+export const CLAUDE_MODELS = [
+  "claude-sonnet-4-20250514",
+  "claude-opus-4-20250514",
+] as const;
+export type ClaudeModel = (typeof CLAUDE_MODELS)[number];
