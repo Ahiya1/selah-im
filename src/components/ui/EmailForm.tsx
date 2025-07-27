@@ -94,6 +94,7 @@ const EmailForm: React.FC<EmailFormProps> = ({
     default: "space-y-4 max-w-md mx-auto",
     inline: "flex space-x-2",
     modal: "space-y-6",
+    bubble: "space-y-3", // Add this line
   };
 
   if (state.isSubmitted) {
