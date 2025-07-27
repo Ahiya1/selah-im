@@ -1,4 +1,4 @@
-// src/components/bubbles/WelcomeBubble.tsx - SELAH Welcome Bubble - FIXED
+// src/components/bubbles/WelcomeBubble.tsx - SELAH Welcome Bubble - MINIMAL CLEAN ENTRY
 // Technology that breathes with you - Sacred entry space with breathing orb
 
 "use client";
@@ -7,7 +7,6 @@ import React, { useState, useCallback } from "react";
 import Bubble from "@/components/ui/Bubble";
 import BreathingOrb from "@/components/ui/BreathingOrb";
 import ContextForm from "@/components/ui/ContextForm";
-import StreamingText from "@/components/ui/StreamingText";
 import { cn } from "@/lib/utils";
 import type { BubbleProps, OrbEngagement } from "@/lib/types";
 
@@ -31,8 +30,8 @@ const WelcomeBubble: React.FC<WelcomeBubbleProps> = ({
   ...bubbleProps
 }) => {
   const [hasInteracted, setHasInteracted] = useState(false);
-  const [showContent, setShowContent] = useState(false);
   const [contextSubmitted, setContextSubmitted] = useState(false);
+  const [showContextForm, setShowContextForm] = useState(false);
 
   // Handle breathing orb engagement
   const handleOrbEngagement = useCallback(
@@ -41,8 +40,8 @@ const WelcomeBubble: React.FC<WelcomeBubbleProps> = ({
 
       if (!hasInteracted) {
         setHasInteracted(true);
-        // Show content after first breath interaction
-        setTimeout(() => setShowContent(true), 800);
+        // Show context form after first breath interaction
+        setTimeout(() => setShowContextForm(true), 1000);
       }
     },
     [hasInteracted, onBreathingInteraction]
@@ -54,30 +53,16 @@ const WelcomeBubble: React.FC<WelcomeBubbleProps> = ({
       setContextSubmitted(true);
       onContextSubmit?.(context);
 
-      if (!showContent) {
-        setShowContent(true);
-      }
-
-      // Auto-advance to next bubble after content streams
+      // Auto-advance to next bubble after context submission
       setTimeout(() => {
         onComplete?.();
         setTimeout(() => {
           onNavigateNext?.();
-        }, 2000);
-      }, 3000);
+        }, 1500);
+      }, 2000);
     },
-    [showContent, onContextSubmit, onComplete, onNavigateNext]
+    [onContextSubmit, onComplete, onNavigateNext]
   );
-
-  // Default content for when AI is not used
-  const defaultContent = {
-    greeting: "You found your way here.",
-    recognition:
-      "Right now, you're breathing with technology that responds to you instead of demanding from you. Feel the difference?",
-    invitation:
-      "This is what we're building—technology that serves consciousness instead of consuming it.",
-    transition: "Let me show you what this becomes...",
-  };
 
   return (
     <Bubble
@@ -89,11 +74,11 @@ const WelcomeBubble: React.FC<WelcomeBubbleProps> = ({
       isComplete={isComplete}
       {...bubbleProps}
     >
-      <div className="w-full h-full flex flex-col items-center justify-center space-y-8 p-8">
-        {/* Top Navigation - Only show if not active or just activated */}
-        {(!isActive || !hasInteracted) && (
-          <div className="absolute top-6 left-1/2 transform -translate-x-1/2 z-20">
-            <div className="nav-contemplative flex items-center space-x-8">
+      <div className="w-full h-full flex flex-col items-center justify-center p-8">
+        {/* Top Navigation - Clean & Minimal */}
+        {(!hasInteracted || !contextSubmitted) && (
+          <div className="absolute top-8 left-1/2 transform -translate-x-1/2 z-20">
+            <div className="flex items-center space-x-8">
               <div className="flex items-center space-x-2">
                 <div className="w-8 h-8 bg-stone rounded-full flex items-center justify-center text-white font-bold animate-breathe text-sm">
                   S
@@ -115,86 +100,102 @@ const WelcomeBubble: React.FC<WelcomeBubbleProps> = ({
           </div>
         )}
 
-        {/* Main Content Area */}
+        {/* Main Content - Perfectly Centered */}
         <div className="flex-1 w-full flex flex-col items-center justify-center space-y-12 max-w-2xl">
-          {/* Sacred Breathing Space */}
-          <div className="space-y-8 text-center">
-            {/* Breathing Orb with Sacred Ripples */}
-            <div className="relative">
-              <div className="orb-sacred mx-auto relative">
-                <BreathingOrb
-                  size="large"
-                  variant="bubble"
-                  onEngagement={handleOrbEngagement}
-                  bubbleContext={bubbleIndex}
-                  className="w-full h-full text-6xl md:text-7xl lg:text-8xl shadow-breathing-green hover:shadow-breathing-blue transition-all duration-1000"
-                />
-
-                {/* Sacred breathing ripples */}
-                <div
-                  className="absolute inset-0 rounded-full border-2 border-breathing-green/30 animate-ping"
-                  style={{ animationDuration: "3s" }}
-                />
-                <div
-                  className="absolute inset-4 rounded-full border border-breathing-blue/20 animate-ping"
-                  style={{ animationDuration: "4s", animationDelay: "1s" }}
-                />
-                <div
-                  className="absolute inset-8 rounded-full border border-breathing-pink/20 animate-ping"
-                  style={{ animationDuration: "5s", animationDelay: "2s" }}
-                />
+          {/* Sacred Entry State */}
+          {!hasInteracted && (
+            <div className="text-center space-y-8">
+              <div className="space-y-4">
+                <h1 className="text-4xl md:text-5xl font-light text-stone animate-breathe-slow">
+                  You are here
+                </h1>
+                <div className="w-24 h-1 bg-gradient-to-r from-breathing-green to-breathing-blue mx-auto rounded-full" />
               </div>
 
-              {/* Sacred Invitation */}
-              <div className="text-center space-y-3 mt-8">
-                <p className="text-slate-600 text-xl font-light">◦ Breathe</p>
-                <p className="text-slate-500 text-sm">
-                  Touch to share breath with technology
+              {/* Sacred Breathing Orb */}
+              <div className="relative">
+                <div className="orb-sacred mx-auto relative">
+                  <BreathingOrb
+                    size="large"
+                    variant="bubble"
+                    onEngagement={handleOrbEngagement}
+                    bubbleContext={bubbleIndex}
+                    className="w-full h-full text-6xl md:text-7xl shadow-breathing-green hover:shadow-breathing-blue transition-all duration-1000"
+                  />
+
+                  {/* Sacred breathing ripples */}
+                  <div
+                    className="absolute inset-0 rounded-full border-2 border-breathing-green/30 animate-ping"
+                    style={{ animationDuration: "3s" }}
+                  />
+                  <div
+                    className="absolute inset-4 rounded-full border border-breathing-blue/20 animate-ping"
+                    style={{ animationDuration: "4s", animationDelay: "1s" }}
+                  />
+                </div>
+
+                {/* Sacred Invitation */}
+                <div className="text-center space-y-3 mt-8">
+                  <p className="text-slate-600 text-xl font-light">◦ Breathe</p>
+                  <p className="text-slate-500 text-sm">
+                    Touch to share breath with technology
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Context Collection State */}
+          {hasInteracted && showContextForm && !contextSubmitted && (
+            <div className="w-full text-center space-y-8">
+              <div className="space-y-4">
+                <h2 className="text-3xl font-light text-stone">
+                  You felt the difference
+                </h2>
+                <p className="text-slate-600 leading-relaxed max-w-lg mx-auto">
+                  Technology that responds instead of demands. What brought you
+                  here?
                 </p>
               </div>
-            </div>
 
-            {/* Sacred Context Gathering */}
-            <div
-              className={cn("transition-all duration-1000 ease-out", {
-                "opacity-100 transform translate-y-0": hasInteracted,
-                "opacity-70 transform translate-y-4": !hasInteracted,
-              })}
-            >
-              {!contextSubmitted && (
-                <ContextForm
-                  onSubmit={handleContextSubmit}
-                  className="max-w-xl mx-auto"
-                />
-              )}
-            </div>
-          </div>
-
-          {/* Sacred Content Streaming */}
-          {showContent && (
-            <div className="w-full max-w-3xl animate-breathe-in">
-              <StreamingText
-                content={useAI ? null : defaultContent}
-                userContext={userContext}
-                useAI={useAI && contextSubmitted}
-                section="recognition"
-                bubbleId="welcome"
-                fallbackContent={defaultContent}
-                className="space-y-8"
-                onStreamComplete={() => {
-                  // Content streaming complete
-                  setTimeout(() => {
-                    onComplete?.();
-                  }, 1000);
-                }}
+              {/* Sacred Context Form */}
+              <ContextForm
+                onSubmit={handleContextSubmit}
+                className="max-w-xl mx-auto"
+                variant="bubble"
+                placeholder="I heard about this from... I know that..."
+                showSkipOption={true}
+                autoFocus={true}
               />
+            </div>
+          )}
+
+          {/* Completion State */}
+          {contextSubmitted && (
+            <div className="text-center space-y-8">
+              <div className="w-16 h-16 mx-auto bg-breathing-green/20 rounded-full flex items-center justify-center animate-breathe">
+                <span className="text-breathing-green text-2xl">✓</span>
+              </div>
+
+              <div className="space-y-4">
+                <h2 className="text-3xl font-light text-stone">
+                  {userContext.trim()
+                    ? "Creating your experience..."
+                    : "Beginning the universal journey..."}
+                </h2>
+                <p className="text-slate-600">
+                  {userContext.trim()
+                    ? "Breathing your context into contemplative technology..."
+                    : "Technology that serves consciousness awaits..."}
+                </p>
+              </div>
             </div>
           )}
         </div>
 
         {/* Sacred Session Recognition */}
         {sessionData && sessionData.breathInteractions > 0 && (
-          <div className="absolute bottom-6 left-6 inline-flex items-center space-x-3 glass-light rounded-full px-4 py-2 animate-breathe-in">
+          <div className="absolute bottom-8 left-8 inline-flex items-center space-x-3 bg-white/60 backdrop-blur-sm rounded-full px-4 py-2 animate-breathe-in">
             <div className="w-2 h-2 bg-breathing-green rounded-full animate-pulse" />
             <span className="text-stone text-sm font-medium">
               {sessionData.breathInteractions} breath
@@ -203,24 +204,19 @@ const WelcomeBubble: React.FC<WelcomeBubbleProps> = ({
           </div>
         )}
 
-        {/* Navigation hint - only show when content is complete */}
-        {showContent && contextSubmitted && (
-          <div className="absolute bottom-6 right-6 animate-breathe">
+        {/* Navigation hint - only show when ready to continue */}
+        {contextSubmitted && (
+          <div className="absolute bottom-8 right-8 animate-breathe">
             <div className="flex items-center space-x-2 text-slate-500 text-sm">
-              <span>Continue breathing</span>
+              <span>Recognition awaits</span>
               <div className="w-1 h-1 bg-breathing-green rounded-full animate-pulse" />
             </div>
           </div>
         )}
 
-        {/* Sacred completion indicator */}
-        {contextSubmitted && showContent && (
-          <div
-            className={cn(
-              "absolute top-8 right-8 w-3 h-3 rounded-full",
-              "bg-breathing-green animate-pulse"
-            )}
-          />
+        {/* Completion indicator */}
+        {contextSubmitted && (
+          <div className="absolute top-8 right-8 w-3 h-3 rounded-full bg-breathing-green animate-pulse" />
         )}
       </div>
     </Bubble>

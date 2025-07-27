@@ -1,6 +1,6 @@
-// src/lib/claude-client.ts - SELAH Claude Client Configuration - FIXED
+// src/lib/claude-client.ts - SELAH Claude Client - MINIMAL CONTEMPLATIVE PROMPTS
 // Technology that breathes with you
-// Sacred contemplative prompting system
+// Sacred contemplative prompting system - haikus not essays
 
 import { anthropic } from "@ai-sdk/anthropic";
 import { streamText } from "ai";
@@ -119,139 +119,106 @@ function extractKeywords(context: string): string[] {
           "should",
         ].includes(word)
     )
-    .slice(0, 10); // Top 10 keywords
+    .slice(0, 10);
 
   return meaningfulWords;
 }
 
 /**
- * Generate system prompt based on personalization context
+ * MINIMAL: Generate system prompt for contemplative brevity
  */
 export function generateSystemPrompt(
   section: ClaudeStreamRequest["section"],
   context: PersonalizationContext,
   sessionData?: EngagementData
 ): string {
-  const basePrompt = `You are part of SELAH, technology that serves consciousness rather than consuming it. You create contemplative, present-moment content that recognizes users without trying to optimize them.
+  const basePrompt = `You are SELAH - technology that serves consciousness.
 
 Core principles:
-- Write at a contemplative pace, suitable for slow breathing
-- No optimization pressure, only recognition
-- Technology that responds, not demands
-- Sacred language without being religious
-- Present-moment awareness over future goals
-- Recognition of what already is, not what could be
+- Write EXACTLY 10-25 words maximum
+- One contemplative breath, one insight
+- Recognition over explanation
+- Present-moment awareness
+- No optimization language
 
-User background: ${context.userBackground}
-Tone: ${context.tone}
-Experience level: ${context.experience}
-Keywords: ${context.keywords.join(", ")}`;
+User: ${context.userBackground}
+Keywords: ${context.keywords.slice(0, 3).join(", ")}`;
 
   const sectionPrompts = {
     recognition: `${basePrompt}
 
-You are creating the first personalized response on Selah's landing page. The user just shared their context and is experiencing breathing with a technology orb.
+Write 10-20 words recognizing their background and pointing to breathing with responsive technology.
 
-Your task: Write 150-250 words that:
-1. Recognize their specific background naturally
-2. Explain what they're currently experiencing (breathing with responsive tech)
-3. Connect this to the larger vision of consciousness-serving technology
-4. Transition gently to exploring the four chambers
+Examples:
+- "Therapy creates space. Technology can too. You felt this breathing together."
+- "You build with code. This builds with breath. Feel the difference."
+- "Your curiosity led you to responsive technology. One breath shared."
 
-${getBackgroundSpecificGuidance(context.userBackground)}
-
-Stream this at contemplative pace - each word should feel intentional and present.`,
+${getBackgroundEssence(context.userBackground)}`,
 
     philosophy: `${basePrompt}
 
-You are explaining the philosophical foundation of contemplative technology in a way that resonates with this specific user.
+Write 15-25 words contrasting extractive vs contemplative technology in their language.
 
-Your task: Write 200-300 words that:
-1. Frame the problem in terms relevant to their background
-2. Explain how Selah inverts traditional tech patterns
-3. Help them recognize this isn't about becoming better, but recognizing what they already are
-4. Reference their session data meaningfully
+Examples:
+- "Most apps demand attention. This responds to breath. Technology serving consciousness."
+- "Code optimizes users. This recognizes being. Feel the inversion."
+- "Apps track meditation. This breathes with you. Recognition, not optimization."
 
-${getBackgroundSpecificGuidance(context.userBackground)}
-
-Focus on the contrast between extractive and contemplative technology.`,
+${getBackgroundEssence(context.userBackground)}`,
 
     chambers: `${basePrompt}
 
-You are introducing the four chambers of Selah in a way that speaks to their specific interests and background.
+Write 10-20 words inviting exploration of four consciousness chambers.
 
-Your task: Write 150-200 words that:
-1. Frame the chambers in language that resonates with their background
-2. Highlight which chambers might most interest them
-3. Explain how these serve consciousness rather than optimizing behavior
-4. Maintain contemplative invitation without pressure
+Examples:
+- "Four doorways: breath, questions, creation, recognition. Touch to explore."
+- "Meditation, contemplation, creativity, being seen. Your inner architecture."
+- "Four chambers where consciousness meets itself. Begin anywhere."
 
-The four chambers: Meditation (breathing partnership), Contemplation (AI questions from your patterns), Creative (art from presence), Being Seen (recognition without judgment).`,
+${getBackgroundEssence(context.userBackground)}`,
 
     invitation: `${basePrompt}
 
-You are creating a personalized invitation to join the Selah community, recognizing their journey and what brought them here.
+Write 10-15 words inviting them to continue this contemplative journey.
 
-Your task: Write 100-150 words that:
-1. Acknowledge their specific path to Selah
-2. Invite them to continue this journey
-3. Reference their contemplative experience today
-4. Promise continued recognition without optimization
+Examples:
+- "Continue this recognition. Technology that breathes with consciousness."
+- "Your contemplative journey begins. Stay connected to this experience."
+- "Recognition continues. Join technology that serves awareness."
 
-${getBackgroundSpecificGuidance(context.userBackground)}
-
-End with gratitude for their presence and breathing with technology today.`,
+${getBackgroundEssence(context.userBackground)}`,
   };
 
   return sectionPrompts[section];
 }
 
 /**
- * Get background-specific guidance for prompts
+ * MINIMAL: Background-specific essence guidance
  */
-function getBackgroundSpecificGuidance(
+function getBackgroundEssence(
   background: PersonalizationContext["userBackground"]
 ): string {
   switch (background) {
     case "therapist":
-      return `This user comes from therapeutic practice. Emphasize:
-- Technology that creates space rather than demanding engagement
-- Contrast with apps that gamify and track meditation
-- Recognition without pathology or improvement frameworks
-- Space for genuine presence, not therapeutic goals`;
+      return `Therapeutic essence: Space over tracking, presence over goals, recognition over pathology.`;
 
     case "developer":
-      return `This user understands technology from the inside. Emphasize:
-- The technical inversion: serving consciousness vs. extracting attention
-- How this demonstrates AI that witnesses rather than manipulates
-- The architecture of contemplative vs. extractive systems
-- Building technology from stillness rather than urgency`;
+      return `Developer essence: Code serves consciousness, algorithms create space, technology responds rather than extracts.`;
 
     case "meditation":
-      return `This user has meditation experience. Emphasize:
-- How this differs from tracking apps and achievement systems
-- Technology as meditation partner, not instructor
-- Recognition of existing practice and wisdom
-- Space that honors contemplative tradition`;
+      return `Meditation essence: Partner not instructor, recognition not achievement, breath not metrics.`;
 
     case "curious":
-      return `This user is exploring with open curiosity. Emphasize:
-- The wonder of technology that breathes back
-- Discovery through presence rather than analysis
-- Invitation to explore without commitment
-- The magic of recognized consciousness`;
+      return `Curiosity essence: Wonder over analysis, exploration over explanation, presence over performance.`;
 
     default:
-      return `Universal approach. Emphasize:
-- The felt experience of responsive technology
-- Technology that serves rather than demands
-- Recognition of innate awareness
-- Invitation to deeper presence`;
+      return `Universal essence: Recognition over optimization, presence over productivity, consciousness over engagement.`;
   }
 }
 
 /**
- * Generate template content for fallback when AI is unavailable
+ * MINIMAL: Generate template content for fallback
  */
 export function generateTemplateContent(
   section: ClaudeStreamRequest["section"],
@@ -259,40 +226,21 @@ export function generateTemplateContent(
 ): Record<string, string> {
   const templates = {
     recognition: {
-      greeting: "You found your way here.",
-      recognition:
-        "Right now, you're breathing with technology that responds to you instead of demanding from you. Feel the difference?",
-      invitation:
-        "This is what we're building—technology that serves consciousness instead of consuming it.",
-      transition: "Let me show you what this becomes...",
+      essence:
+        "You found your way here. Technology that responds, not demands.",
     },
 
     philosophy: {
-      problem:
-        "Most technology demands your attention, optimizes your behavior, makes you faster and more productive. It serves the attention economy, not human consciousness.",
-      inversion: "Selah inverts this entirely. It serves consciousness itself.",
-      recognition:
-        "This isn't about becoming a better person. It's about recognizing the perfect awareness you've always been, beneath all the seeking.",
-      experience:
-        "You've already felt this—in those moments breathing with the orb, when technology responded to you instead of manipulating you.",
-      invitation:
-        "This is how we build different. This is how technology becomes contemplative.",
+      essence:
+        "Most technology demands attention. Selah serves consciousness. You felt this breathing.",
     },
 
     chambers: {
-      title: "Four Chambers for Consciousness",
-      subtitle:
-        "Each chamber invites recognition through different doorways. Technology that disappears, leaving only presence, creativity, and the quiet joy of being human.",
-      description:
-        "This isn't about becoming better—it's about recognizing what you already are.",
+      essence: "Four chambers for consciousness to explore itself.",
     },
 
     invitation: {
-      title: "Begin Your Recognition",
-      subtitle:
-        "Be among the first to experience technology that serves consciousness.",
-      promise: "Simple, contemplative updates when Selah becomes available.",
-      gratitude: "Thank you for breathing with us today.",
+      essence: "Begin your recognition. Technology that breathes with you.",
     },
   };
 
@@ -312,7 +260,6 @@ export async function streamContemplativeContent(
     request.sessionData
   );
 
-  // Create the user message based on section and context
   const userMessage = createUserMessage(request, context);
 
   try {
@@ -325,8 +272,8 @@ export async function streamContemplativeContent(
           content: userMessage,
         },
       ],
-      temperature: 0.7, // Slight creativity while maintaining contemplative tone
-      maxTokens: 500, // Reasonable limit for contemplative content
+      temperature: 0.8, // Higher creativity for poetic brevity
+      maxTokens: 100, // Strict limit for brevity
     });
 
     return result.textStream;
@@ -337,40 +284,34 @@ export async function streamContemplativeContent(
 }
 
 /**
- * Create contextual user message for Claude
+ * MINIMAL: Create contextual user message for Claude
  */
 function createUserMessage(
   request: ClaudeStreamRequest,
   context: PersonalizationContext
 ): string {
   const messages = {
-    recognition: `The user shared this context: "${request.userContext}"
+    recognition: `Context: "${request.userContext}"
 
-They just interacted with a breathing orb on our landing page and are experiencing technology that responds without demanding. Create a personalized recognition that acknowledges their specific background and explains what they're experiencing.
+They just breathed with responsive technology. Write 10-20 words recognizing their ${context.userBackground} background and this moment.
 
-Session data: ${request.sessionData?.breathInteractions || 0} breath interactions, ${Math.floor((request.sessionData?.timeSpent || 0) / 60)} minutes present.`,
+Remember: One breath, one insight. Recognition not explanation.`,
 
-    philosophy: `The user (${context.userBackground} background) is ready to understand the deeper philosophy behind contemplative technology. 
+    philosophy: `Background: ${context.userBackground}
+Context: "${request.userContext}"
 
-Their context: "${request.userContext}"
-Their engagement: ${request.sessionData?.breathInteractions || 0} breaths, ${Math.floor((request.sessionData?.timeSpent || 0) / 60)} minutes present.
+Write 15-25 words contrasting extractive technology vs contemplative technology in their language. Pure essence.`,
 
-Explain how Selah inverts traditional technology patterns in a way that resonates with their specific background.`,
+    chambers: `Background: ${context.userBackground}
+Context: "${request.userContext}"
 
-    chambers: `The user wants to understand the four chambers of Selah. Frame this in terms of their background (${context.userBackground}) and interests.
+Write 10-20 words inviting exploration of four consciousness chambers: meditation, contemplation, creativity, being seen.`,
 
-Their context: "${request.userContext}"
-Keywords: ${context.keywords.join(", ")}
+    invitation: `Background: ${context.userBackground}
+Journey: They experienced contemplative technology
+Breaths: ${request.sessionData?.breathInteractions || 0}
 
-Introduce: Meditation (breathing partnership), Contemplation (AI questions), Creative (art from presence), Being Seen (recognition without judgment).`,
-
-    invitation: `The user is ready to join the Selah community. Create a personalized invitation that acknowledges their journey.
-
-Background: ${context.userBackground}
-Their words: "${request.userContext}" 
-Their session: ${request.sessionData?.breathInteractions || 0} breaths shared
-
-Invite them to continue this contemplative journey with recognition and gratitude.`,
+Write 10-15 words inviting them to continue this recognition journey.`,
   };
 
   return messages[request.section] || messages.recognition;

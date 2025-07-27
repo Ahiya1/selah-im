@@ -1,6 +1,6 @@
-// src/lib/types.ts - SELAH Enhanced TypeScript Definitions - FIXED
+// src/lib/types.ts - SELAH Enhanced TypeScript Definitions - TWO-PHASE UX
 // Technology that breathes with you
-// Type-safe contemplative data structures with Claude AI integration
+// Type-safe contemplative data structures with two-phase bubble UX
 
 // ============================================================================
 // CLAUDE AI INTEGRATION TYPES
@@ -43,7 +43,59 @@ export interface PersonalizationContext {
 }
 
 // ============================================================================
-// BUBBLE NAVIGATION TYPES
+// BUBBLE ORCHESTRATION TYPES
+// ============================================================================
+
+export interface BubbleStreamingState {
+  shouldStream: boolean;
+  hasStreamed: boolean;
+}
+
+export interface BubbleOrchestrationState {
+  [bubbleIndex: number]: BubbleStreamingState;
+}
+
+export interface EnhancedBubbleProps extends BubbleProps {
+  shouldStartStreaming?: boolean;
+  hasStreamedBefore?: boolean;
+  onStreamComplete?: () => void;
+}
+
+// ============================================================================
+// TWO-PHASE UX TYPES (NEW)
+// ============================================================================
+
+export type BubblePhase = "streaming" | "interactive";
+
+export interface TwoPhaseBubbleState {
+  phase: BubblePhase;
+  streamingTriggered: boolean;
+  interactiveReady: boolean;
+  hasCompletedStream: boolean;
+}
+
+export interface BubbleContentPhases {
+  streaming: {
+    content: string | object;
+    useAI: boolean;
+    duration?: number;
+  };
+  interactive: {
+    component: React.ComponentType;
+    data?: any;
+    autoAdvance?: boolean;
+  };
+}
+
+export interface StreamingToInteractiveProps {
+  phase: BubblePhase;
+  onPhaseChange: (phase: BubblePhase) => void;
+  streamingComplete: boolean;
+  onStreamingComplete: () => void;
+}
+
+// ============================================================================
+// BUBBLE NAVIGATION TYPES (Enhanced)
 // ============================================================================
 
 export interface BubbleConfig {
@@ -53,6 +105,7 @@ export interface BubbleConfig {
   component: React.ComponentType<BubbleProps>;
   order: number;
   requiresContext?: boolean;
+  hasTwoPhases?: boolean;
 }
 
 export interface BubbleProps {
@@ -63,7 +116,6 @@ export interface BubbleProps {
   onNavigateNext?: () => void;
   onNavigatePrev?: () => void;
   onComplete?: () => void;
-  // Fixed: Made these optional to match component usage
   bubbleIndex?: number;
   isActive?: boolean;
   isComplete?: boolean;
@@ -140,6 +192,7 @@ export interface BubbleJourneyData {
   contextProvided: boolean;
   completedJourney: boolean;
   exitPoint?: number;
+  phasesCompleted?: Record<number, BubblePhase[]>; // Track which phases completed per bubble
 }
 
 export interface OrbEngagement {
@@ -169,6 +222,7 @@ export interface PageView {
   scrollDepth: number; // deprecated for bubbles
   interactions: string[];
   bubbleId?: string;
+  bubblePhase?: BubblePhase;
 }
 
 // ============================================================================
@@ -218,8 +272,13 @@ export interface StreamingTextProps {
   section?: "recognition" | "chambers" | "philosophy" | "invitation";
   onStreamComplete?: () => void;
   bubbleId?: string;
-  // Fixed: Changed to accept both string and object
   fallbackContent?: string | any;
+  // Orchestration props
+  shouldStartStreaming?: boolean;
+  forceRestream?: boolean;
+  // Two-phase props
+  phase?: BubblePhase;
+  minimalContent?: boolean;
 }
 
 export interface StreamingTextState {
@@ -229,6 +288,30 @@ export interface StreamingTextState {
   contentToStream: string;
   isAIGenerated: boolean;
   rateLimited: boolean;
+}
+
+// ============================================================================
+// CHAMBER TYPES (Enhanced for Minimal UX)
+// ============================================================================
+
+export interface ChamberInfo {
+  id: "meditation" | "contemplation" | "creative" | "being-seen";
+  title: string;
+  description: string;
+  icon: string;
+  available: boolean;
+  comingSoon?: boolean;
+  features?: string[]; // Optional for minimal UX
+  color: string;
+  backgroundColor?: string;
+  bubblePreview?: React.ComponentType;
+  minimalDescription?: string; // Short description for bubble view
+}
+
+export interface MinimalChamberState {
+  expanded: number | null;
+  hasInteracted: boolean;
+  autoAdvanceTriggered: boolean;
 }
 
 // ============================================================================
@@ -250,6 +333,7 @@ export interface BubbleRef {
   inView: boolean;
   completed: boolean;
   aiPersonalized: boolean;
+  currentPhase?: BubblePhase;
 }
 
 // ============================================================================
@@ -272,6 +356,7 @@ export interface AIUsageSummary {
   fallbackUsed: number;
   averageResponseTime: number;
   costEstimate: number;
+  averageWordCount: number; // For minimal content tracking
   topContextTypes: Array<{
     type: PersonalizationContext["userBackground"];
     count: number;
@@ -294,6 +379,7 @@ export interface AnalyticsSummary {
   averageTimeSpent: number;
   totalOrbInteractions: number;
   bubbleCompletionRates?: Record<number, number>;
+  phaseCompletionRates?: Record<number, Record<BubblePhase, number>>; // Track phase completion
   aiPersonalizationRate?: number;
   topSources: Array<{
     source: EmailSource;
@@ -312,6 +398,7 @@ export interface DailyStats {
   orbInteractions: number;
   aiRequests?: number;
   bubbleCompletions?: number;
+  streamingCompletions?: number; // Track streaming phase completions
 }
 
 export interface EngagementTrend {
@@ -347,54 +434,6 @@ export interface LoginAttempt {
 }
 
 // ============================================================================
-// CHAMBER TYPES (Enhanced for Bubble Preview)
-// ============================================================================
-
-export interface ChamberInfo {
-  id: "meditation" | "contemplation" | "creative" | "being-seen";
-  title: string;
-  description: string;
-  icon: string;
-  available: boolean;
-  comingSoon?: boolean;
-  features: string[];
-  color: string;
-  backgroundColor: string;
-  bubblePreview?: React.ComponentType;
-}
-
-export interface MeditationSession {
-  id: string;
-  startTime: string;
-  endTime?: string;
-  duration: number; // seconds
-  breathCycles: number;
-  quality?: "poor" | "fair" | "good" | "excellent";
-  notes?: string;
-  orbEngagements: OrbEngagement[];
-  bubbleContext?: number;
-}
-
-export interface ContemplativeQuestion {
-  id: string;
-  content: string;
-  source: "ai-generated" | "system" | "user-created";
-  timestamp: string;
-  reflections: Reflection[];
-  tags?: string[];
-  personalizedContext?: PersonalizationContext;
-}
-
-export interface Reflection {
-  id: string;
-  content: string;
-  timestamp: string;
-  wordCount: number;
-  mood?: string;
-  insights?: string[];
-}
-
-// ============================================================================
 // STORAGE TYPES (Enhanced)
 // ============================================================================
 
@@ -418,6 +457,7 @@ export interface UserPreferences {
   breathingSpeed: "slow" | "normal" | "fast";
   aiPersonalization: boolean;
   bubbleTransitions: "smooth" | "instant";
+  minimalContent: boolean; // Preference for minimal vs detailed content
 }
 
 // ============================================================================
@@ -432,6 +472,7 @@ export interface ApiResponse<T = any> {
   timestamp: string;
   rateLimited?: boolean;
   aiGenerated?: boolean;
+  wordCount?: number; // Track minimal content length
 }
 
 export interface EmailSubmissionResponse extends ApiResponse<EmailSubmission> {
@@ -453,6 +494,7 @@ export interface ClaudeAPIResponse extends ApiResponse<string> {
   model?: string;
   rateLimited?: boolean;
   fallbackUsed?: boolean;
+  wordCount?: number; // Track generated content length
 }
 
 // ============================================================================
@@ -529,6 +571,7 @@ export interface BubbleAnimationConfig extends AnimationConfig {
   exitAnimation: "fade" | "scale" | "slide";
   transitionAnimation: "morph" | "fade" | "slide";
   breathingEffect: boolean;
+  phaseTransition?: AnimationConfig; // For streaming → interactive transition
 }
 
 // ============================================================================
@@ -583,6 +626,7 @@ export interface BubbleComponentProps extends BaseComponentProps {
   color: "green" | "orange" | "purple" | "blue";
   onActivate?: () => void;
   onComplete?: () => void;
+  phase?: BubblePhase;
 }
 
 // ============================================================================
@@ -591,6 +635,8 @@ export interface BubbleComponentProps extends BaseComponentProps {
 
 export const BREATHING_STATES = ["inhale", "exhale", "still"] as const;
 export type BreathingState = (typeof BREATHING_STATES)[number];
+
+export const BUBBLE_PHASES = ["streaming", "interactive"] as const;
 
 export const EMAIL_SOURCES = [
   "landing-page",

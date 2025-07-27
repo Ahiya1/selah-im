@@ -1,98 +1,23 @@
-// src/app/page.tsx - SELAH Sacred Bubble Journey Landing Page
-// Technology that breathes with you - Four contemplative bubbles
+// src/app/page.tsx - SELAH Sacred Bubble Journey Landing Page - ORCHESTRATED
+// Technology that breathes with you - Four contemplative bubbles with AI orchestration
 
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
 import { generateSessionMetadata } from "@/lib/utils";
-import type { EngagementData, BubbleJourneyData } from "@/lib/types";
+import type {
+  EngagementData,
+  BubbleJourneyData,
+  BubbleOrchestrationState,
+  BubbleStreamingState,
+} from "@/lib/types";
 
-// Bubble Components
+// Real Bubble Components
 import BubbleContainer from "@/components/ui/BubbleContainer";
 import WelcomeBubble from "@/components/bubbles/WelcomeBubble";
-import { cn } from "@/lib/utils";
-
-// Temporary placeholder bubbles (will be built in next phase)
-const PhilosophyBubble: React.FC<any> = ({
-  isActive,
-  onComplete,
-  onNavigateNext,
-  ...props
-}) => (
-  <div className="w-full h-full flex items-center justify-center">
-    <div
-      className={cn(
-        "w-96 h-96 rounded-full bg-gradient-to-br from-breathing-gold to-stone",
-        "flex items-center justify-center text-white text-2xl font-bold",
-        "shadow-lg transition-all duration-1000",
-        {
-          "scale-110 shadow-2xl": isActive,
-          "scale-95 opacity-70": !isActive,
-        }
-      )}
-    >
-      <div className="text-center space-y-4">
-        <div className="text-6xl">🤔</div>
-        <div>Philosophy Bubble</div>
-        <div className="text-sm opacity-80">Coming in next phase...</div>
-      </div>
-    </div>
-  </div>
-);
-
-const ExperienceBubble: React.FC<any> = ({
-  isActive,
-  onComplete,
-  onNavigateNext,
-  ...props
-}) => (
-  <div className="w-full h-full flex items-center justify-center">
-    <div
-      className={cn(
-        "w-96 h-96 rounded-full bg-gradient-to-br from-breathing-pink to-stone",
-        "flex items-center justify-center text-white text-2xl font-bold",
-        "shadow-lg transition-all duration-1000",
-        {
-          "scale-110 shadow-2xl": isActive,
-          "scale-95 opacity-70": !isActive,
-        }
-      )}
-    >
-      <div className="text-center space-y-4">
-        <div className="text-6xl">✨</div>
-        <div>Experience Bubble</div>
-        <div className="text-sm opacity-80">Four chambers preview...</div>
-      </div>
-    </div>
-  </div>
-);
-
-const JoinBubble: React.FC<any> = ({
-  isActive,
-  onComplete,
-  onNavigateNext,
-  ...props
-}) => (
-  <div className="w-full h-full flex items-center justify-center">
-    <div
-      className={cn(
-        "w-96 h-96 rounded-full bg-gradient-to-br from-breathing-blue to-stone",
-        "flex items-center justify-center text-white text-2xl font-bold",
-        "shadow-lg transition-all duration-1000",
-        {
-          "scale-110 shadow-2xl": isActive,
-          "scale-95 opacity-70": !isActive,
-        }
-      )}
-    >
-      <div className="text-center space-y-4">
-        <div className="text-6xl">📧</div>
-        <div>Join Bubble</div>
-        <div className="text-sm opacity-80">Email signup & completion...</div>
-      </div>
-    </div>
-  </div>
-);
+import PhilosophyBubble from "@/components/bubbles/PhilosophyBubble";
+import ExperienceBubble from "@/components/bubbles/ExperienceBubble";
+import JoinBubble from "@/components/bubbles/JoinBubble";
 
 export default function SelahHomePage(): JSX.Element {
   // Core state management
@@ -100,6 +25,13 @@ export default function SelahHomePage(): JSX.Element {
   const [useAI, setUseAI] = useState<boolean>(false);
   const [sessionData, setSessionData] = useState<EngagementData | null>(null);
   const [currentBubble, setCurrentBubble] = useState<number>(0);
+
+  // NEW: Bubble orchestration state
+  const [bubbleStates, setBubbleStates] = useState<BubbleOrchestrationState>({
+    1: { shouldStream: false, hasStreamed: false }, // Philosophy
+    2: { shouldStream: false, hasStreamed: false }, // Experience
+  });
+
   const [bubbleJourney, setBubbleJourney] = useState<BubbleJourneyData>({
     bubblesVisited: [0],
     timeInEachBubble: { 0: Date.now() },
@@ -118,7 +50,7 @@ export default function SelahHomePage(): JSX.Element {
     const initialSessionData: EngagementData = {
       sessionId: metadata.sessionId,
       timeSpent: 0,
-      maxScroll: 0, // Deprecated for bubbles, but kept for compatibility
+      maxScroll: 0,
       breathInteractions: 0,
       orbEngagements: [],
       pageViews: [
@@ -173,16 +105,25 @@ export default function SelahHomePage(): JSX.Element {
 
   // Handle context submission from Welcome bubble
   const handleContextSubmit = (context: string) => {
+    const hasContext = context.trim().length > 0;
+
     setUserContext(context);
-    setUseAI(context.trim().length > 0);
+    setUseAI(hasContext);
+
+    // NEW: Prepare bubbles for AI streaming if context provided
+    if (hasContext) {
+      setBubbleStates({
+        1: { shouldStream: true, hasStreamed: false },
+        2: { shouldStream: true, hasStreamed: false },
+      });
+    }
 
     setBubbleJourney((prev) => ({
       ...prev,
-      contextProvided: context.trim().length > 0,
-      aiInteractions:
-        context.trim().length > 0
-          ? prev.aiInteractions + 1
-          : prev.aiInteractions,
+      contextProvided: hasContext,
+      aiInteractions: hasContext
+        ? prev.aiInteractions + 1
+        : prev.aiInteractions,
     }));
   };
 
@@ -198,7 +139,7 @@ export default function SelahHomePage(): JSX.Element {
     );
   };
 
-  // Handle bubble navigation
+  // NEW: Enhanced bubble navigation with streaming orchestration
   const handleBubbleChange = (bubbleIndex: number) => {
     const now = Date.now();
 
@@ -210,9 +151,29 @@ export default function SelahHomePage(): JSX.Element {
       bubblesVisited: [...new Set([...prev.bubblesVisited, bubbleIndex])],
       timeInEachBubble: {
         ...prev.timeInEachBubble,
-        [bubbleIndex]: 0, // Reset time for new bubble
+        [bubbleIndex]: 0,
       },
     }));
+
+    // NEW: Trigger streaming for Philosophy (1) and Experience (2) bubbles
+    if ((bubbleIndex === 1 || bubbleIndex === 2) && bubbleStates[bubbleIndex]) {
+      const bubbleState = bubbleStates[bubbleIndex];
+
+      // Only mark as "should stream" if we have context and haven't streamed yet
+      if (useAI && userContext.trim() && !bubbleState.hasStreamed) {
+        console.log(
+          `🌸 SELAH: Triggering AI streaming for bubble ${bubbleIndex}`
+        );
+
+        setBubbleStates((prev) => ({
+          ...prev,
+          [bubbleIndex]: {
+            ...prev[bubbleIndex],
+            shouldStream: true,
+          },
+        }));
+      }
+    }
 
     // Add page view for new bubble
     setSessionData((prev) =>
@@ -235,6 +196,21 @@ export default function SelahHomePage(): JSX.Element {
     );
   };
 
+  // NEW: Handle when bubble completes streaming
+  const handleBubbleStreamComplete = (bubbleIndex: number) => {
+    if (bubbleIndex === 1 || bubbleIndex === 2) {
+      setBubbleStates((prev) => ({
+        ...prev,
+        [bubbleIndex]: {
+          ...prev[bubbleIndex],
+          hasStreamed: true,
+        },
+      }));
+
+      console.log(`✨ SELAH: Bubble ${bubbleIndex} streaming complete`);
+    }
+  };
+
   // Handle journey completion
   const handleJourneyComplete = () => {
     setBubbleJourney((prev) => ({
@@ -253,11 +229,13 @@ export default function SelahHomePage(): JSX.Element {
           }
         : prev
     );
+
+    console.log("🎉 SELAH: Contemplative journey complete");
   };
 
   // Jump to signup (shortcut from Welcome bubble)
   const jumpToSignup = () => {
-    setCurrentBubble(3); // Jump to Join bubble
+    setCurrentBubble(3);
     handleBubbleChange(3);
   };
 
@@ -267,12 +245,29 @@ export default function SelahHomePage(): JSX.Element {
     return bubbleIds[index] || "unknown";
   };
 
-  // Shared props for all bubbles
-  const bubbleProps = {
-    userContext,
-    useAI,
-    sessionData,
-    onBreathingInteraction: handleBreathingInteraction,
+  // NEW: Enhanced shared props with orchestration data
+  const getBubbleProps = (bubbleIndex: number) => {
+    const baseProps = {
+      userContext,
+      useAI,
+      sessionData,
+      onBreathingInteraction: handleBreathingInteraction,
+    };
+
+    // Add orchestration props for Philosophy and Experience bubbles
+    if (bubbleIndex === 1 || bubbleIndex === 2) {
+      const bubbleState = bubbleStates[bubbleIndex];
+
+      return {
+        ...baseProps,
+        shouldStartStreaming:
+          bubbleState?.shouldStream && !bubbleState?.hasStreamed,
+        hasStreamedBefore: bubbleState?.hasStreamed || false,
+        onStreamComplete: () => handleBubbleStreamComplete(bubbleIndex),
+      };
+    }
+
+    return baseProps;
   };
 
   return (
@@ -281,6 +276,7 @@ export default function SelahHomePage(): JSX.Element {
       <div className="sr-only" aria-live="polite">
         Currently viewing {getBubbleId(currentBubble)} bubble,
         {currentBubble + 1} of 4 in your contemplative journey
+        {useAI && userContext && " with AI personalization"}
       </div>
 
       {/* Main Bubble Navigation */}
@@ -292,21 +288,21 @@ export default function SelahHomePage(): JSX.Element {
         showIndicators={true}
         className="font-inter"
       >
-        {/* Bubble 1: Welcome & Recognition */}
+        {/* Bubble 1: Welcome & Context Collection */}
         <WelcomeBubble
-          {...bubbleProps}
+          {...getBubbleProps(0)}
           onContextSubmit={handleContextSubmit}
           onJumpToSignup={jumpToSignup}
         />
 
-        {/* Bubble 2: Philosophy & Understanding */}
-        <PhilosophyBubble {...bubbleProps} />
+        {/* Bubble 2: Philosophy & Recognition - NOW WITH AI ORCHESTRATION */}
+        <PhilosophyBubble {...getBubbleProps(1)} />
 
-        {/* Bubble 3: Experience & Chambers */}
-        <ExperienceBubble {...bubbleProps} />
+        {/* Bubble 3: Experience & Chambers - NOW WITH AI ORCHESTRATION */}
+        <ExperienceBubble {...getBubbleProps(2)} />
 
         {/* Bubble 4: Invitation & Signup */}
-        <JoinBubble {...bubbleProps} />
+        <JoinBubble {...getBubbleProps(3)} />
       </BubbleContainer>
 
       {/* Journey Analytics (Hidden) */}
@@ -339,12 +335,32 @@ export default function SelahHomePage(): JSX.Element {
         />
       </div>
 
-      {/* Preload next bubble content (performance optimization) */}
-      {currentBubble < 3 && (
+      {/* NEW: Preload Claude API for upcoming bubbles */}
+      {useAI && userContext && currentBubble < 3 && (
         <link
           rel="prefetch"
           href={`/api/claude-stream?section=${getBubbleId(currentBubble + 1)}`}
         />
+      )}
+
+      {/* Development debug info (only in dev) */}
+      {process.env.NODE_ENV === "development" && (
+        <div className="fixed bottom-4 left-4 bg-black/80 text-white text-xs p-2 rounded font-mono">
+          <div>
+            Bubble: {currentBubble} ({getBubbleId(currentBubble)})
+          </div>
+          <div>AI: {useAI ? "✓" : "✗"}</div>
+          <div>Context: {userContext.length} chars</div>
+          <div>
+            Streams:{" "}
+            {Object.entries(bubbleStates)
+              .map(
+                ([idx, state]) =>
+                  `${idx}:${state.hasStreamed ? "✓" : state.shouldStream ? "..." : "○"}`
+              )
+              .join(" ")}
+          </div>
+        </div>
       )}
     </div>
   );

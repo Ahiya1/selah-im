@@ -1,4 +1,4 @@
-// src/components/ui/StreamingText.tsx - SELAH Enhanced Streaming Text with Claude
+// src/components/ui/StreamingText.tsx - SELAH Enhanced Streaming Text - FIXED SPACING + MINIMAL
 // Technology that breathes with you - AI-powered contemplative content streaming
 
 "use client";
@@ -9,7 +9,6 @@ import type {
   StreamingTextProps,
   StreamingTextState,
   ClaudeStreamRequest,
-  EngagementData,
 } from "@/lib/types";
 
 const StreamingText: React.FC<StreamingTextProps> = ({
@@ -21,6 +20,8 @@ const StreamingText: React.FC<StreamingTextProps> = ({
   onStreamComplete,
   bubbleId,
   fallbackContent,
+  shouldStartStreaming = false,
+  forceRestream = false,
 }) => {
   const [state, setState] = useState<StreamingTextState>({
     displayedWords: [],
@@ -31,10 +32,13 @@ const StreamingText: React.FC<StreamingTextProps> = ({
     rateLimited: false,
   });
 
+  const [hasInitialized, setHasInitialized] = useState(false);
+  const [orchestrationTriggered, setOrchestrationTriggered] = useState(false);
+
   const abortController = useRef<AbortController | null>(null);
   const streamingTimeouts = useRef<NodeJS.Timeout[]>([]);
 
-  // Stream words naturally with contemplative pacing
+  // FIXED: Stream words with proper spacing
   const streamWords = useCallback(
     async (text: string, aiGenerated: boolean = false) => {
       if (!text) return;
@@ -50,14 +54,16 @@ const StreamingText: React.FC<StreamingTextProps> = ({
         isAIGenerated: aiGenerated,
       }));
 
-      const words = text.split(" ").filter((word) => word.trim());
+      // FIXED: Split by spaces and filter empty strings
+      const words = text.split(/\s+/).filter((word) => word.trim().length > 0);
+
       let cumulativeDelay = 0;
 
       for (let i = 0; i < words.length; i++) {
         const word = words[i];
 
         // Calculate contemplative delay
-        let delay = getContemplativeDelay(word, i, words.length);
+        const delay = getContemplativeDelay(word, i, words.length);
         cumulativeDelay += delay;
 
         const timeout = setTimeout(() => {
@@ -86,9 +92,8 @@ const StreamingText: React.FC<StreamingTextProps> = ({
   // Handle AI streaming from Claude API
   const handleAIStreaming = useCallback(async () => {
     if (!userContext || !useAI) {
-      // Use template content
       const templateText = formatTemplatedContent(content || fallbackContent);
-      setState((prev) => ({ ...prev, contentToStream: templateText }));
+      await streamWords(templateText, false);
       return;
     }
 
@@ -113,6 +118,10 @@ const StreamingText: React.FC<StreamingTextProps> = ({
         templateStructure: content,
       };
 
+      console.log(
+        `🤖 StreamingText: Starting AI stream for section "${section}"`
+      );
+
       const response = await fetch("/api/claude-stream", {
         method: "POST",
         headers: {
@@ -126,13 +135,11 @@ const StreamingText: React.FC<StreamingTextProps> = ({
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      // Check if response is streaming or JSON
       const contentType = response.headers.get("content-type");
       const isRateLimited = response.status === 429;
       const aiGenerated = response.headers.get("x-ai-generated") === "true";
 
       if (isRateLimited || contentType?.includes("application/json")) {
-        // Handle rate limited or fallback response
         const result = await response.json();
 
         setState((prev) => ({
@@ -150,7 +157,6 @@ const StreamingText: React.FC<StreamingTextProps> = ({
           );
           await streamWords(templateText, false);
         }
-
         return;
       }
 
@@ -160,30 +166,22 @@ const StreamingText: React.FC<StreamingTextProps> = ({
       }
     } catch (error) {
       if (error instanceof Error && error.name === "AbortError") {
-        return; // Request was cancelled
+        return;
       }
 
       console.error("AI streaming error:", error);
-
-      // Fall back to template content
-      setState((prev) => ({
-        ...prev,
-        isAIGenerated: false,
-        rateLimited: false,
-      }));
-
       const templateText = formatTemplatedContent(content || fallbackContent);
       await streamWords(templateText, false);
     }
   }, [userContext, useAI, section, content, fallbackContent, streamWords]);
 
-  // Handle streaming response from Claude API
+  // FIXED: Handle streaming response with proper word handling
   const handleStreamingResponse = useCallback(
     async (body: ReadableStream, aiGenerated: boolean) => {
       const reader = body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
-      let streamedText = "";
+      let accumulatedText = "";
 
       setState((prev) => ({
         ...prev,
@@ -207,74 +205,98 @@ const StreamingText: React.FC<StreamingTextProps> = ({
                 const data = JSON.parse(line);
 
                 if (data.type === "content") {
-                  streamedText += data.text;
-
-                  // Stream word by word as we receive content
-                  const words = streamedText.split(" ");
-                  const newWords = words.slice(state.displayedWords.length);
-
-                  for (const word of newWords) {
-                    if (word.trim()) {
-                      await new Promise((resolve) => {
-                        setTimeout(
-                          () => {
-                            setState((prev) => ({
-                              ...prev,
-                              displayedWords: [...prev.displayedWords, word],
-                            }));
-                            resolve(void 0);
-                          },
-                          getContemplativeDelay(word, 0, 1)
-                        );
-                      });
-                    }
-                  }
+                  accumulatedText += data.text;
                 } else if (data.type === "complete") {
-                  setState((prev) => ({
-                    ...prev,
-                    isStreaming: false,
-                    streamingComplete: true,
-                  }));
-                  onStreamComplete?.();
-                  break;
+                  // Stream all accumulated text at once with proper spacing
+                  if (accumulatedText.trim()) {
+                    await streamWords(accumulatedText.trim(), aiGenerated);
+                  }
+                  return;
                 }
               } catch (e) {
-                // Ignore parsing errors for malformed JSON
+                // Ignore parsing errors
               }
             }
           }
+        }
+
+        // If no completion signal, stream what we have
+        if (accumulatedText.trim()) {
+          await streamWords(accumulatedText.trim(), aiGenerated);
         }
       } finally {
         reader.releaseLock();
       }
     },
-    [state.displayedWords.length, onStreamComplete]
+    [streamWords]
   );
 
-  // Initialize content streaming
+  // Orchestration effect
   useEffect(() => {
-    if (useAI && userContext) {
-      handleAIStreaming();
-    } else if (content || fallbackContent) {
-      const templateText = formatTemplatedContent(content || fallbackContent);
-      streamWords(templateText, false);
+    if (!useAI && !hasInitialized) {
+      console.log(
+        `📝 StreamingText: Starting template stream for section "${section}"`
+      );
+      setHasInitialized(true);
+
+      if (content || fallbackContent) {
+        const templateText = formatTemplatedContent(content || fallbackContent);
+        streamWords(templateText, false);
+      }
+      return;
     }
 
+    if (useAI && shouldStartStreaming && !orchestrationTriggered) {
+      console.log(
+        `🎭 StreamingText: Orchestration triggered for section "${section}"`
+      );
+      setOrchestrationTriggered(true);
+      setHasInitialized(true);
+      handleAIStreaming();
+      return;
+    }
+
+    if (forceRestream && hasInitialized) {
+      console.log(
+        `🔄 StreamingText: Force restreaming for section "${section}"`
+      );
+      setOrchestrationTriggered(false);
+      setState((prev) => ({
+        ...prev,
+        displayedWords: [],
+        isStreaming: false,
+        streamingComplete: false,
+      }));
+
+      if (useAI) {
+        handleAIStreaming();
+      } else {
+        const templateText = formatTemplatedContent(content || fallbackContent);
+        streamWords(templateText, false);
+      }
+    }
+  }, [
+    useAI,
+    shouldStartStreaming,
+    orchestrationTriggered,
+    hasInitialized,
+    forceRestream,
+    content,
+    fallbackContent,
+    section,
+    handleAIStreaming,
+    streamWords,
+  ]);
+
+  // Cleanup
+  useEffect(() => {
     return () => {
-      // Cleanup on unmount
       if (abortController.current) {
         abortController.current.abort();
       }
       streamingTimeouts.current.forEach(clearTimeout);
     };
-  }, [
-    useAI,
-    userContext,
-    content,
-    fallbackContent,
-    handleAIStreaming,
-    streamWords,
-  ]);
+  }, []);
 
   // Calculate contemplative delay between words
   const getContemplativeDelay = (
@@ -282,155 +304,120 @@ const StreamingText: React.FC<StreamingTextProps> = ({
     index: number,
     total: number
   ): number => {
-    const baseDelay = 120; // Base 120ms between words
+    const baseDelay = 150; // Slightly slower for contemplation
 
-    // Longer pause after punctuation for breathing space
+    // Longer pause after punctuation
     if (word.endsWith(".") || word.endsWith("?") || word.endsWith("!")) {
-      return 400;
+      return 600;
     }
 
-    // Slightly longer pause after commas
+    // Pause after commas
     if (word.endsWith(",")) {
-      return 200;
+      return 300;
     }
 
     // Vary delay for natural rhythm
-    const lengthFactor = Math.min(word.length / 8, 1);
-    const variance = Math.random() * 40; // 0-40ms variance
+    const lengthFactor = Math.min(word.length / 6, 1);
+    const variance = Math.random() * 50;
 
-    return Math.floor(baseDelay + lengthFactor * 30 + variance);
+    return Math.floor(baseDelay + lengthFactor * 40 + variance);
   };
 
-  // Format templated content into readable text
+  // SIMPLIFIED: Format minimal contemplative content
   const formatTemplatedContent = (content: any): string => {
     if (typeof content === "string") return content;
     if (!content) return "";
 
-    // Handle different content structures based on section
+    // MINIMAL content for each section
     switch (section) {
       case "recognition":
-        return [
-          content.greeting || "You found your way here.",
-          content.recognition ||
-            "Right now, you're breathing with technology that responds to you instead of demanding from you. Feel the difference?",
-          content.invitation ||
-            "This is what we're building—technology that serves consciousness instead of consuming it.",
-          content.transition || "Let me show you what this becomes...",
-        ]
-          .filter(Boolean)
-          .join("\n\n");
-
-      case "chambers":
-        return [
-          content.title || "Four Chambers for Consciousness",
-          content.subtitle ||
-            "Each chamber invites recognition through different doorways. Technology that disappears, leaving only presence, creativity, and the quiet joy of being human.",
-          content.description ||
-            "This isn't about becoming better—it's about recognizing what you already are.",
-        ]
-          .filter(Boolean)
-          .join("\n\n");
+        return (
+          content.essence || content.greeting || "You found your way here."
+        );
 
       case "philosophy":
-        return [
+        return (
+          content.essence ||
           content.problem ||
-            "Most technology demands your attention, optimizes your behavior, makes you faster and more productive. It serves the attention economy, not human consciousness.",
-          content.inversion ||
-            "Selah inverts this entirely. It serves consciousness itself.",
-          content.recognition ||
-            "This isn't about becoming a better person. It's about recognizing the perfect awareness you've always been, beneath all the seeking.",
-          content.experience ||
-            "You've already felt this—in those moments breathing with the orb, when technology responded to you instead of manipulating you.",
-          content.invitation ||
-            "This is how we build different. This is how technology becomes contemplative.",
-        ]
-          .filter(Boolean)
-          .join("\n\n");
+          "Most technology demands attention. Selah serves consciousness."
+        );
+
+      case "chambers":
+        return (
+          content.essence ||
+          content.title ||
+          "Four chambers for consciousness to explore itself."
+        );
 
       case "invitation":
-        return [
-          content.title || "Begin Your Recognition",
-          content.subtitle ||
-            "Be among the first to experience technology that serves consciousness.",
-          content.promise ||
-            "Simple, contemplative updates when Selah becomes available.",
-          content.gratitude || "Thank you for breathing with us today.",
-        ]
-          .filter(Boolean)
-          .join("\n\n");
+        return content.essence || content.title || "Begin your recognition.";
 
       default:
         return typeof content === "object"
-          ? JSON.stringify(content)
+          ? String(Object.values(content)[0] || "")
           : String(content);
     }
   };
 
-  // Render content with contemplative styling
+  // SIMPLIFIED: Render minimal content
   const renderContent = () => {
     if (!state.displayedWords.length && !state.isStreaming) {
       return null;
     }
 
-    // Split into paragraphs based on sentence patterns
     const fullText = state.displayedWords.join(" ");
-    const paragraphs = fullText.split(/\n\n|\. [A-Z]/).map((p, i, arr) => {
-      // Add back period if it was split off
-      if (i < arr.length - 1 && !p.endsWith(".")) {
-        return p + ".";
-      }
-      return p;
-    });
 
-    return paragraphs
-      .map((paragraph, paragraphIndex) => {
-        if (!paragraph.trim()) return null;
-
-        return (
-          <p
-            key={paragraphIndex}
-            className={cn(
-              "text-lg leading-relaxed mb-6 text-slate-700",
-              "transition-opacity duration-500",
-              {
-                "animate-breathe-in": state.streamingComplete,
-              }
-            )}
-          >
-            {paragraph.split(" ").map((word, wordIndex) => (
-              <span
-                key={`${paragraphIndex}-${wordIndex}`}
-                className={cn(
-                  "inline-block transition-all duration-300",
-                  "hover:text-stone cursor-default",
-                  {
-                    "animate-breathe-subtle": state.streamingComplete,
-                  }
-                )}
-                style={{
-                  animationDelay: `${wordIndex * 0.1}s`,
-                }}
-              >
-                {word}
-                {wordIndex < paragraph.split(" ").length - 1 ? " " : ""}
-              </span>
-            ))}
-          </p>
-        );
-      })
-      .filter(Boolean);
+    return (
+      <div className="text-center">
+        <p
+          className={cn(
+            "text-2xl md:text-3xl font-light leading-relaxed text-slate-700",
+            "transition-opacity duration-500",
+            {
+              "animate-breathe-in": state.streamingComplete,
+            }
+          )}
+        >
+          {state.displayedWords.map((word, wordIndex) => (
+            <span
+              key={wordIndex}
+              className={cn(
+                "inline-block transition-all duration-300",
+                "hover:text-stone cursor-default mr-2",
+                {
+                  "animate-breathe-subtle": state.streamingComplete,
+                }
+              )}
+              style={{
+                animationDelay: `${wordIndex * 0.1}s`,
+              }}
+            >
+              {word}
+            </span>
+          ))}
+        </p>
+      </div>
+    );
   };
 
   return (
     <div className={cn("text-streaming", className)}>
+      {/* Orchestration waiting indicator */}
+      {useAI && !orchestrationTriggered && !hasInitialized && (
+        <div className="flex items-center space-x-3 mb-6 justify-center">
+          <div className="w-2 h-2 bg-slate-400 rounded-full animate-pulse" />
+          <span className="text-slate-500 text-sm animate-breathe-slow">
+            Awaiting personalization...
+          </span>
+        </div>
+      )}
+
       {/* Streaming indicator */}
       {state.isStreaming && state.displayedWords.length === 0 && (
         <div className="flex items-center space-x-3 mb-6 justify-center">
           <div className="w-2 h-2 bg-breathing-blue rounded-full animate-pulse" />
           <span className="text-slate-600 text-sm animate-breathe-slow">
-            {state.isAIGenerated || useAI
-              ? "Recognizing your context..."
-              : "Breathing words into existence..."}
+            {state.isAIGenerated || useAI ? "Recognizing..." : "Breathing..."}
           </span>
         </div>
       )}
@@ -439,15 +426,15 @@ const StreamingText: React.FC<StreamingTextProps> = ({
       {state.rateLimited && (
         <div className="mb-6 p-4 bg-breathing-gold/10 border-l-4 border-breathing-gold rounded-r-lg">
           <p className="text-sm text-slate-600 italic">
-            ✨ You've experienced your personalized journey today. The universal
-            journey continues below.
+            ✨ Your personalized journey continues tomorrow. Universal
+            experience below.
           </p>
         </div>
       )}
 
       {/* Main content */}
       <div
-        className={cn("prose-contemplative text-center", {
+        className={cn("prose-contemplative", {
           "animate-breathe-slow": state.streamingComplete,
         })}
       >
@@ -456,10 +443,8 @@ const StreamingText: React.FC<StreamingTextProps> = ({
 
       {/* AI attribution */}
       {state.isAIGenerated && state.streamingComplete && (
-        <div className="mt-8 text-center animate-breathe-in">
-          <p className="text-xs text-slate-500 italic">
-            ✨ Personalized with contemplative AI
-          </p>
+        <div className="mt-6 text-center animate-breathe-in">
+          <p className="text-xs text-slate-500 italic">✨ AI Personalized</p>
         </div>
       )}
 

@@ -1,6 +1,6 @@
-// src/components/ui/BubbleContainer.tsx - SELAH Bubble Navigation Container - FIXED
+// src/components/ui/BubbleContainer.tsx - SELAH Bubble Navigation Container - SINGLE BUBBLE DISPLAY
 // Technology that breathes with you
-// Sacred navigation system between contemplative bubbles
+// Sacred navigation system - ONE bubble at a time
 
 "use client";
 
@@ -42,7 +42,6 @@ const BubbleContainer: React.FC<BubbleContainerProps> = ({
   });
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const bubbleRefs = useRef<(HTMLDivElement | null)[]>([]);
   const autoAdvanceTimer = useRef<NodeJS.Timeout | null>(null);
 
   // Handle bubble navigation
@@ -67,16 +66,6 @@ const BubbleContainer: React.FC<BubbleContainerProps> = ({
         autoAdvanceTimer.current = null;
       }
 
-      // Smooth scroll to target bubble
-      const targetBubble = bubbleRefs.current[targetIndex];
-      if (targetBubble) {
-        targetBubble.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-          inline: "center",
-        });
-      }
-
       // Update state after transition
       setTimeout(() => {
         setState((prev) => ({
@@ -99,7 +88,7 @@ const BubbleContainer: React.FC<BubbleContainerProps> = ({
         if (targetIndex === state.totalBubbles - 1) {
           onJourneyComplete?.();
         }
-      }, 1000);
+      }, 800);
     },
     [
       state.currentBubble,
@@ -268,41 +257,36 @@ const BubbleContainer: React.FC<BubbleContainerProps> = ({
         }}
       />
 
-      {/* Bubble content area */}
-      <div
-        className={cn(
-          "relative z-10 w-full h-full",
-          "flex items-center justify-center",
-          "scroll-smooth snap-y snap-mandatory overflow-y-auto scrollbar-hide",
-          {
-            "pointer-events-none": state.isTransitioning,
-          }
-        )}
-      >
-        {/* Individual bubbles */}
+      {/* FIXED: Single bubble display area */}
+      <div className="relative z-10 w-full h-full">
+        {/* Render only the current bubble */}
         {children.map((child, index) => (
           <div
             key={index}
-            ref={(el) => {
-              bubbleRefs.current[index] = el;
-            }}
             className={cn(
-              "w-full h-screen flex items-center justify-center snap-center",
-              "transition-all duration-1000 ease-out",
+              "absolute inset-0 w-full h-full flex items-center justify-center",
+              "transition-all duration-800 ease-out",
               {
-                "opacity-100 scale-100": index === state.currentBubble,
-                "opacity-50 scale-95":
-                  index !== state.currentBubble &&
-                  Math.abs(index - state.currentBubble) === 1,
-                "opacity-0 scale-90": Math.abs(index - state.currentBubble) > 1,
-                "transform translate-y-8":
+                // Current bubble - visible and active
+                "opacity-100 scale-100 pointer-events-auto":
+                  index === state.currentBubble,
+
+                // Non-current bubbles - hidden
+                "opacity-0 scale-95 pointer-events-none":
+                  index !== state.currentBubble,
+
+                // Transition effects
+                "transform translate-x-8":
                   index > state.currentBubble &&
                   state.transitionDirection === "forward",
-                "transform -translate-y-8":
+                "transform -translate-x-8":
                   index < state.currentBubble &&
                   state.transitionDirection === "backward",
               }
             )}
+            style={{
+              zIndex: index === state.currentBubble ? 10 : 0,
+            }}
             data-bubble-index={index}
             data-active={index === state.currentBubble}
             data-completed={state.completedBubbles.includes(index)}
@@ -352,7 +336,7 @@ const BubbleContainer: React.FC<BubbleContainerProps> = ({
         </div>
       )}
 
-      {/* Navigation arrows (optional) */}
+      {/* Navigation arrows */}
       <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-20">
         <div className="flex items-center space-x-4">
           {allowBackNavigation && state.currentBubble > 0 && (
@@ -410,7 +394,7 @@ const BubbleContainer: React.FC<BubbleContainerProps> = ({
         <div
           className={cn(
             "fixed inset-0 pointer-events-none z-30",
-            "transition-opacity duration-500",
+            "transition-opacity duration-800",
             "bg-gradient-radial from-breathing-green/10 to-transparent"
           )}
         />

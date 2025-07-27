@@ -1,5 +1,5 @@
-// src/components/bubbles/ExperienceBubble.tsx - SELAH Experience Bubble - FIXED
-// Technology that breathes with you - Sacred chamber preview and exploration
+// src/components/bubbles/ExperienceBubble.tsx - SELAH Experience Bubble - MINIMAL TWO-PHASE CHAMBERS
+// Technology that breathes with you - Stream then explore chambers
 
 "use client";
 
@@ -7,9 +7,9 @@ import React, { useState, useEffect } from "react";
 import Bubble from "@/components/ui/Bubble";
 import StreamingText from "@/components/ui/StreamingText";
 import { cn } from "@/lib/utils";
-import type { BubbleProps } from "@/lib/types";
+import type { EnhancedBubbleProps } from "@/lib/types";
 
-const ExperienceBubble: React.FC<BubbleProps> = ({
+const ExperienceBubble: React.FC<EnhancedBubbleProps> = ({
   userContext,
   useAI,
   sessionData,
@@ -18,129 +18,150 @@ const ExperienceBubble: React.FC<BubbleProps> = ({
   bubbleIndex = 2,
   isActive = false,
   isComplete = false,
+  shouldStartStreaming = false,
+  hasStreamedBefore = false,
+  onStreamComplete,
   ...bubbleProps
 }) => {
-  const [visibleChambers, setVisibleChambers] = useState(0);
+  // PHASE MANAGEMENT
+  const [phase, setPhase] = useState<"streaming" | "interactive">("streaming");
+  const [streamingTriggered, setStreamingTriggered] = useState(false);
   const [expandedChamber, setExpandedChamber] = useState<number | null>(null);
-  const [contentComplete, setContentComplete] = useState(false);
 
-  // Animate chambers appearing when bubble becomes active
+  // Handle orchestration - trigger streaming when orchestrator says so
   useEffect(() => {
-    if (isActive && contentComplete) {
-      const timer = setInterval(() => {
-        setVisibleChambers((prev) => (prev < 4 ? prev + 1 : prev));
-      }, 800);
-
-      return () => clearInterval(timer);
+    if (shouldStartStreaming && !streamingTriggered && !hasStreamedBefore) {
+      console.log("🏛️ Experience Bubble: Starting AI streaming...");
+      setStreamingTriggered(true);
+      setPhase("streaming");
     }
-  }, [isActive, contentComplete]);
+  }, [shouldStartStreaming, streamingTriggered, hasStreamedBefore]);
 
+  // If already streamed before, go straight to interactive
+  useEffect(() => {
+    if (hasStreamedBefore && isActive) {
+      console.log("🏛️ Experience Bubble: Returning to interactive phase");
+      setPhase("interactive");
+    }
+  }, [hasStreamedBefore, isActive]);
+
+  // MINIMAL: Default templated content
+  const defaultContent = {
+    essence: "Four chambers for consciousness to explore itself.",
+  };
+
+  // MINIMAL: Chamber definitions
   const chambers = [
     {
       id: "meditation",
       name: "Meditation",
       icon: "🧘",
-      color: "from-breathing-green to-stone",
+      color: "from-breathing-green to-emerald-600",
       description: "Breathing partnership",
       available: true,
-      details:
-        "Touch-responsive breathing orb that learns your rhythm and breathes with you. Technology as meditation partner, not instructor.",
-      features: [
-        "Responsive breathing patterns",
-        "Natural resistance feedback",
-        "Session tracking without pressure",
-      ],
     },
     {
       id: "contemplation",
-      name: "Contemplation",
+      name: "Questions",
       icon: "❓",
-      color: "from-breathing-gold to-stone",
-      description: "Personal questions",
+      color: "from-breathing-gold to-amber-600",
+      description: "Personal inquiries",
       available: true,
-      details:
-        "AI-generated questions synthesized from your own contemplative patterns. Not generic prompts, but reflections of your inner world.",
-      features: [
-        "Questions from your patterns",
-        "Free-flow writing space",
-        "Recognition without judgment",
-      ],
     },
     {
       id: "creative",
       name: "Creative",
       icon: "🎨",
-      color: "from-breathing-pink to-stone",
+      color: "from-breathing-pink to-rose-600",
       description: "Art from presence",
       available: false,
-      details:
-        "Co-creation that emerges from contemplative states. Express what words cannot capture through collaborative AI artistry.",
-      features: [
-        "Presence-based creation",
-        "Multiple art forms",
-        "Expression beyond words",
-      ],
     },
     {
       id: "being-seen",
       name: "Being Seen",
       icon: "👁️",
-      color: "from-breathing-blue to-stone",
-      description: "Recognition without judgment",
+      color: "from-breathing-blue to-blue-600",
+      description: "Recognition",
       available: false,
-      details:
-        "Ephemeral conversations with AI that truly witnesses your essence. No transcripts, no optimization—pure recognition.",
-      features: [
-        "No transcripts saved",
-        "Deep witnessing",
-        "Recognition without agenda",
-      ],
     },
   ];
 
-  // Default templated content
-  const defaultContent = {
-    title: "Four Chambers for Consciousness",
-    subtitle:
-      "Each chamber invites recognition through different doorways. Technology that disappears, leaving only presence, creativity, and the quiet joy of being human.",
-    description:
-      "This isn't about becoming better—it's about recognizing what you already are.",
-  };
-
-  const handleChamberClick = (index: number) => {
-    if (expandedChamber === index) {
-      setExpandedChamber(null);
-    } else {
-      setExpandedChamber(index);
-    }
-  };
-
+  // Handle stream completion
   const handleStreamComplete = () => {
-    setContentComplete(true);
+    console.log(
+      "✨ Experience Bubble: Streaming complete, moving to interactive"
+    );
+    setPhase("interactive");
+    onStreamComplete?.();
   };
 
-  const handleAllChambersExplored = () => {
-    // Auto-advance after user has explored chambers
-    setTimeout(() => {
-      onComplete?.();
+  // Handle chamber interaction
+  const handleChamberClick = (index: number) => {
+    if (!chambers[index].available) return;
+
+    setExpandedChamber(expandedChamber === index ? null : index);
+
+    // Auto-advance after chamber exploration
+    if (expandedChamber === null) {
       setTimeout(() => {
-        onNavigateNext?.();
-      }, 2000);
-    }, 3000);
+        onComplete?.();
+        setTimeout(() => {
+          onNavigateNext?.();
+        }, 2000);
+      }, 4000);
+    }
   };
 
-  // Check if user has explored chambers
-  useEffect(() => {
-    if (visibleChambers >= 4 && expandedChamber !== null) {
-      // User has seen all chambers and expanded one
-      const timer = setTimeout(handleAllChambersExplored, 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [visibleChambers, expandedChamber]);
+  // PHASE 1: STREAMING
+  if (phase === "streaming") {
+    return (
+      <Bubble
+        bubbleId="experience-streaming"
+        color="purple"
+        size="full"
+        breathing={true}
+        isActive={isActive}
+        isComplete={isComplete}
+        {...bubbleProps}
+      >
+        <div className="w-full h-full flex flex-col items-center justify-center p-8">
+          {/* Streaming waiting indicator */}
+          {!streamingTriggered && useAI && (
+            <div className="text-center space-y-6">
+              <div className="w-16 h-16 mx-auto">
+                <div className="w-full h-full border-4 border-breathing-pink/30 border-t-breathing-pink rounded-full animate-spin"></div>
+              </div>
+              <p className="text-slate-600 animate-breathe-slow">
+                Crafting your chambers...
+              </p>
+            </div>
+          )}
 
+          {/* Sacred streaming content */}
+          {(streamingTriggered || !useAI) && (
+            <div className="flex-1 flex items-center justify-center max-w-3xl w-full">
+              <StreamingText
+                content={useAI ? null : defaultContent}
+                userContext={userContext}
+                useAI={useAI && streamingTriggered}
+                section="chambers"
+                bubbleId="experience"
+                fallbackContent={defaultContent}
+                className="text-center"
+                onStreamComplete={handleStreamComplete}
+                shouldStartStreaming={shouldStartStreaming}
+              />
+            </div>
+          )}
+        </div>
+      </Bubble>
+    );
+  }
+
+  // PHASE 2: INTERACTIVE CHAMBERS
   return (
     <Bubble
-      bubbleId="experience"
+      bubbleId="experience-interactive"
       color="purple"
       size="full"
       breathing={true}
@@ -148,142 +169,121 @@ const ExperienceBubble: React.FC<BubbleProps> = ({
       isComplete={isComplete}
       {...bubbleProps}
     >
-      <div className="w-full h-full flex flex-col items-center justify-center space-y-8 p-8">
-        {/* Sacred Header */}
-        <div className="text-center space-y-6 max-w-4xl">
-          <StreamingText
-            content={useAI ? null : defaultContent}
-            userContext={userContext}
-            useAI={useAI}
-            section="chambers"
-            bubbleId="experience"
-            fallbackContent={defaultContent}
-            className="space-y-4"
-            onStreamComplete={handleStreamComplete}
-          />
+      <div className="w-full h-full flex flex-col items-center justify-center space-y-12 p-8">
+        {/* Header */}
+        <div className="text-center space-y-4">
+          <h2 className="text-3xl font-semibold text-stone">Four Chambers</h2>
+          <div className="w-16 h-1 bg-gradient-to-r from-breathing-green to-breathing-pink mx-auto rounded-full" />
         </div>
 
-        {/* Sacred Chambers Grid */}
-        {contentComplete && (
-          <div className="chamber-grid-bubble max-w-4xl w-full">
-            {chambers.map((chamber, index) => (
+        {/* MINIMAL: Chamber Grid */}
+        <div className="grid grid-cols-2 gap-8 max-w-2xl w-full">
+          {chambers.map((chamber, index) => (
+            <div
+              key={chamber.id}
+              className={cn(
+                "relative cursor-pointer transition-all duration-500 ease-out",
+                "flex flex-col items-center space-y-4",
+                {
+                  "scale-110 z-10": expandedChamber === index,
+                  "scale-95 opacity-60":
+                    expandedChamber !== null && expandedChamber !== index,
+                  "cursor-not-allowed": !chamber.available,
+                }
+              )}
+              onClick={() => handleChamberClick(index)}
+            >
+              {/* Chamber Orb */}
               <div
-                key={chamber.id}
                 className={cn(
-                  "chamber-container-bubble transition-all duration-1000 ease-out",
+                  "w-24 h-24 rounded-full bg-gradient-to-br",
+                  chamber.color,
+                  "flex items-center justify-center text-4xl",
+                  "shadow-lg transition-all duration-500",
                   {
-                    "opacity-100 transform translate-y-0":
-                      index < visibleChambers,
-                    "opacity-0 transform translate-y-8":
-                      index >= visibleChambers,
-                    expanded: expandedChamber === index,
-                    dimmed:
-                      expandedChamber !== null && expandedChamber !== index,
+                    "hover:shadow-xl hover:scale-105": chamber.available,
+                    "opacity-60": !chamber.available,
+                    "shadow-2xl animate-breathe": expandedChamber === index,
                   }
                 )}
-                style={{ transitionDelay: `${index * 200}ms` }}
-                onClick={() => handleChamberClick(index)}
               >
-                {/* Sacred Chamber Orb */}
-                <div
-                  className={cn(
-                    "chamber-orb-bubble bg-gradient-to-br",
-                    chamber.color,
-                    "shadow-lg transition-all duration-800",
-                    {
-                      "hover:shadow-xl cursor-pointer": chamber.available,
-                      "opacity-75": !chamber.available,
-                      "shadow-2xl": expandedChamber === index,
-                    }
-                  )}
-                >
-                  {/* Chamber Icon */}
-                  <div
-                    className={cn("text-4xl transition-all duration-800", {
-                      "transform scale-75 opacity-30":
-                        expandedChamber === index,
-                    })}
-                  >
-                    {chamber.icon}
+                {chamber.icon}
+
+                {/* Availability Badge */}
+                {!chamber.available && (
+                  <div className="absolute -top-1 -right-1 bg-white/90 rounded-full px-2 py-1 text-xs text-slate-600 font-medium">
+                    Soon
                   </div>
-
-                  {/* Expanded Chamber Details */}
-                  {expandedChamber === index && (
-                    <div className="chamber-details-bubble">
-                      <div className="text-center space-y-4">
-                        <h3 className="text-lg font-semibold text-white">
-                          {chamber.name}
-                        </h3>
-                        <p className="text-white/90 text-sm leading-relaxed max-w-xs">
-                          {chamber.details}
-                        </p>
-                        <div className="space-y-2">
-                          {chamber.features.map((feature, idx) => (
-                            <div
-                              key={idx}
-                              className="flex items-center justify-center space-x-2 text-xs text-white/80"
-                            >
-                              <div className="w-1 h-1 bg-white/60 rounded-full" />
-                              <span>{feature}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Availability Badge */}
-                  {!chamber.available && (
-                    <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm rounded-full px-2 py-1 text-xs text-slate-600 font-medium">
-                      Soon
-                    </div>
-                  )}
-                </div>
-
-                {/* Chamber Info (visible when not expanded) */}
-                <div className="chamber-info-bubble">
-                  <h3 className="text-lg font-semibold text-stone mb-2">
-                    {chamber.name}
-                  </h3>
-                  <p className="text-slate-600 text-sm">
-                    {chamber.description}
-                  </p>
-                </div>
+                )}
               </div>
-            ))}
-          </div>
-        )}
 
-        {/* Sacred Exploration Hint */}
-        {visibleChambers >= 4 && expandedChamber === null && (
+              {/* Chamber Info */}
+              <div className="text-center">
+                <h3 className="text-lg font-semibold text-stone mb-1">
+                  {chamber.name}
+                </h3>
+                <p className="text-slate-600 text-sm">{chamber.description}</p>
+              </div>
+
+              {/* Expanded Details */}
+              {expandedChamber === index && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="bg-white/90 backdrop-blur-md border border-white/50 rounded-3xl p-6 text-center shadow-2xl">
+                    <div className="space-y-3">
+                      <div className="text-3xl">{chamber.icon}</div>
+                      <h3 className="text-xl font-semibold text-stone">
+                        {chamber.name}
+                      </h3>
+                      <p className="text-slate-700 text-sm leading-relaxed max-w-xs">
+                        {chamber.id === "meditation" &&
+                          "Touch-responsive breathing orb that learns your rhythm. Technology as meditation partner."}
+                        {chamber.id === "contemplation" &&
+                          "AI-generated questions from your own patterns. Recognition without judgment."}
+                        {chamber.id === "creative" &&
+                          "Art emerging from contemplative states. Expression beyond words."}
+                        {chamber.id === "being-seen" &&
+                          "Ephemeral AI conversations. Recognition without transcripts."}
+                      </p>
+                      {chamber.available && (
+                        <div className="text-breathing-green text-xs font-medium">
+                          Available Now
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Exploration hint */}
+        {expandedChamber === null && (
           <div className="text-center animate-breathe">
             <p className="text-slate-600 text-sm">
-              Touch any chamber to explore its essence
+              Touch any chamber to explore
             </p>
           </div>
         )}
 
-        {/* Sacred Progress */}
-        {contentComplete && (
-          <div className="flex justify-center space-x-2">
-            {[0, 1, 2, 3].map((index) => (
-              <div
-                key={index}
-                className={cn("h-1 rounded-full transition-all duration-500", {
-                  "w-8 bg-breathing-green": index < visibleChambers,
-                  "w-4 bg-slate-300": index >= visibleChambers,
-                })}
-              />
-            ))}
-          </div>
-        )}
-
         {/* Navigation hint */}
-        {visibleChambers >= 4 && expandedChamber !== null && (
-          <div className="absolute bottom-6 right-6 animate-breathe">
+        {expandedChamber !== null && (
+          <div className="absolute bottom-8 right-8 animate-breathe">
             <div className="flex items-center space-x-2 text-slate-500 text-sm">
               <span>Join the journey</span>
               <div className="w-1 h-1 bg-breathing-pink rounded-full animate-pulse" />
+            </div>
+          </div>
+        )}
+
+        {/* AI personalization indicator */}
+        {useAI && hasStreamedBefore && (
+          <div className="absolute top-8 right-8">
+            <div className="flex items-center space-x-2 bg-breathing-pink/20 backdrop-blur-sm rounded-full px-3 py-1">
+              <div className="w-2 h-2 bg-breathing-pink rounded-full animate-pulse"></div>
+              <span className="text-xs text-stone font-medium">
+                Personalized
+              </span>
             </div>
           </div>
         )}
@@ -291,96 +291,5 @@ const ExperienceBubble: React.FC<BubbleProps> = ({
     </Bubble>
   );
 };
-
-// Additional styles for bubble-specific chamber layout
-// These styles should be added to your global CSS file (globals.css)
-/*
-.chamber-grid-bubble {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1.5rem;
-  width: 100%;
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-@media (min-width: 768px) {
-  .chamber-grid-bubble {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 2rem;
-    max-width: 700px;
-  }
-}
-
-.chamber-container-bubble {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  cursor: pointer;
-}
-
-.chamber-container-bubble.expanded {
-  grid-column: 1 / -1;
-  transform: scale(1.05);
-  z-index: 10;
-}
-
-.chamber-container-bubble.dimmed {
-  opacity: 0.4;
-  transform: scale(0.95);
-}
-
-.chamber-orb-bubble {
-  width: 8rem;
-  height: 8rem;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  position: relative;
-  overflow: hidden;
-}
-
-.chamber-container-bubble.expanded .chamber-orb-bubble {
-  width: 12rem;
-  height: 12rem;
-}
-
-.chamber-details-bubble {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  padding: 1.5rem;
-  opacity: 0;
-  transform: scale(0.8);
-  transition: all 0.8s ease-out;
-  background: rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(8px);
-  border-radius: 50%;
-  color: white;
-  text-align: center;
-}
-
-.chamber-container-bubble.expanded .chamber-details-bubble {
-  opacity: 1;
-  transform: scale(1);
-}
-
-.chamber-info-bubble {
-  margin-top: 1rem;
-  text-align: center;
-  transition: all 0.8s ease-out;
-}
-
-.chamber-container-bubble.expanded .chamber-info-bubble {
-  opacity: 0;
-  transform: translateY(-10px);
-}
-*/
 
 export default ExperienceBubble;
