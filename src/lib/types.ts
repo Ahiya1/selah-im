@@ -687,3 +687,68 @@ export const CLAUDE_MODELS = [
   "claude-opus-4-20250514",
 ] as const;
 export type ClaudeModel = (typeof CLAUDE_MODELS)[number];
+// ============================================================================
+// PRESENTATION SESSION TYPES (NEW)
+// ============================================================================
+
+export interface PresentationSession {
+  id: string;
+  userContext: string | null;
+  useAI: boolean;
+  userFingerprint: string;
+
+  // Pre-generated content for all bubbles
+  bubbleContent: {
+    philosophy: BubbleContent;
+    experience: BubbleContent;
+    invitation: BubbleContent;
+  };
+
+  // Journey tracking
+  journey: BubbleJourneyData;
+  analytics: EngagementData;
+
+  // Meta
+  createdAt: string;
+  updatedAt: string;
+  status: "active" | "completed" | "expired";
+}
+
+export interface BubbleContent {
+  content: string;
+  isAI: boolean;
+  isStreaming: boolean;
+  hasStreamed: boolean;
+  rateLimited?: boolean;
+  generatedAt?: string;
+}
+
+export interface SessionCreationRequest {
+  userContext?: string;
+  userFingerprint: string;
+  sessionMetadata: {
+    userAgent: string;
+    viewport: { width: number; height: number };
+    timestamp: string;
+  };
+}
+
+export interface SessionUpdateRequest {
+  sessionId: string;
+  updates: {
+    userContext?: string;
+    currentBubble?: number;
+    breathInteractions?: number;
+    orbEngagements?: OrbEngagement[];
+    timeSpent?: number;
+  };
+}
+
+export interface SessionContentRequest {
+  sessionId: string;
+  bubbleId: "philosophy" | "experience" | "invitation";
+}
+
+export interface SessionResponse extends ApiResponse<PresentationSession> {
+  session: PresentationSession;
+}

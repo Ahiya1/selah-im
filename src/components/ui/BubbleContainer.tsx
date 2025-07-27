@@ -137,17 +137,9 @@ const BubbleContainer: React.FC<BubbleContainerProps> = ({
 
       switch (event.key) {
         case "ArrowRight":
-        case " ":
-          event.preventDefault();
-          nextBubble();
-          break;
         case "ArrowLeft":
           event.preventDefault();
           prevBubble();
-          break;
-        case "Enter":
-          event.preventDefault();
-          completeBubble();
           break;
         case "Escape":
           // Reset to first bubble

@@ -1,63 +1,162 @@
-// src/components/bubbles/ExperienceBubble.tsx - SELAH Experience Bubble - FIXED TIMING
-// Technology that breathes with you - Proper two-phase orchestration
+// src/components/bubbles/ExperienceBubble.tsx - SELAH Experience Bubble - SESSION-BASED
+// Technology that breathes with you - Clean session-based chambers experience
 
 "use client";
 
 import React, { useState, useEffect } from "react";
 import Bubble from "@/components/ui/Bubble";
-import StreamingText from "@/components/ui/StreamingText";
 import { cn } from "@/lib/utils";
-import type { EnhancedBubbleProps } from "@/lib/types";
+import type { PresentationSession, BubbleContent } from "@/lib/types";
 
-const ExperienceBubble: React.FC<EnhancedBubbleProps> = ({
-  userContext,
-  useAI,
-  sessionData,
+interface ExperienceBubbleProps {
+  sessionId: string;
+  userContext: string;
+  useAI: boolean;
+  sessionData: any;
+  onBreathingInteraction: () => void;
+  onNavigateNext?: () => void;
+  onNavigatePrev?: () => void;
+  onComplete?: () => void;
+  bubbleIndex?: number;
+  isActive?: boolean;
+  isComplete?: boolean;
+}
+
+const ExperienceBubble: React.FC<ExperienceBubbleProps> = ({
+  sessionId,
+  isActive = false,
+  isComplete = false,
   onNavigateNext,
   onComplete,
   bubbleIndex = 2,
-  isActive = false,
-  isComplete = false,
-  shouldStartStreaming = false,
-  hasStreamedBefore = false,
-  onStreamComplete,
   ...bubbleProps
 }) => {
-  // PHASE MANAGEMENT
   const [phase, setPhase] = useState<"streaming" | "interactive">("streaming");
-  const [streamingTriggered, setStreamingTriggered] = useState(false);
+  const [content, setContent] = useState<BubbleContent | null>(null);
+  const [displayedWords, setDisplayedWords] = useState<string[]>([]);
+  const [isStreaming, setIsStreaming] = useState(false);
   const [expandedChamber, setExpandedChamber] = useState<number | null>(null);
 
-  // FIXED: Handle orchestration - only trigger streaming when explicitly told
+  // Fetch content when bubble becomes active
   useEffect(() => {
-    if (shouldStartStreaming && !streamingTriggered && isActive) {
-      console.log("🏛️ Experience Bubble: Starting AI streaming...");
-      setStreamingTriggered(true);
-      setPhase("streaming");
+    if (isActive && sessionId) {
+      fetchBubbleContent();
     }
-  }, [shouldStartStreaming, streamingTriggered, isActive]);
+  }, [isActive, sessionId]);
 
-  // FIXED: Only return to interactive if we've actually streamed before AND we're not currently supposed to stream
-  useEffect(() => {
-    if (hasStreamedBefore && isActive && !shouldStartStreaming) {
-      console.log("🏛️ Experience Bubble: Returning to interactive phase");
+  /**
+   * Fetch content from session API
+   */
+  const fetchBubbleContent = async () => {
+    try {
+      const response = await fetch(
+        `/api/sessions/content?sessionId=${sessionId}&bubbleId=experience`
+      );
+      const result = await response.json();
+
+      if (result.success) {
+        const bubbleContent = result.data;
+        setContent(bubbleContent);
+
+        if (bubbleContent.hasStreamed) {
+          setPhase("interactive");
+        } else {
+          startStreaming(bubbleContent.content);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch bubble content:", error);
+      // Use fallback content
+      setContent({
+        content: "Four chambers for consciousness to explore itself.",
+        isAI: false,
+        isStreaming: false,
+        hasStreamed: true,
+      });
       setPhase("interactive");
     }
-  }, [hasStreamedBefore, isActive, shouldStartStreaming]);
-
-  // FIXED: Reset streaming state when bubble becomes inactive
-  useEffect(() => {
-    if (!isActive) {
-      setStreamingTriggered(false);
-    }
-  }, [isActive]);
-
-  // MINIMAL: Default templated content
-  const defaultContent = {
-    essence: "Four chambers for consciousness to explore itself.",
   };
 
-  // MINIMAL: Chamber definitions
+  /**
+   * Start streaming the content word by word
+   */
+  const startStreaming = (text: string) => {
+    if (!text) {
+      setPhase("interactive");
+      return;
+    }
+
+    setIsStreaming(true);
+    setDisplayedWords([]);
+    setPhase("streaming");
+
+    const words = text.split(/\s+/).filter((word) => word.trim().length > 0);
+    let currentIndex = 0;
+
+    const streamNextWord = () => {
+      if (currentIndex < words.length) {
+        setDisplayedWords((prev) => [...prev, words[currentIndex]]);
+        currentIndex++;
+
+        const delay = getContemplativeDelay(
+          words[currentIndex - 1],
+          currentIndex - 1,
+          words.length
+        );
+        setTimeout(streamNextWord, delay);
+      } else {
+        setIsStreaming(false);
+        setTimeout(() => {
+          setPhase("interactive");
+        }, 1000);
+      }
+    };
+
+    streamNextWord();
+  };
+
+  /**
+   * Calculate contemplative delay between words
+   */
+  const getContemplativeDelay = (
+    word: string,
+    index: number,
+    total: number
+  ): number => {
+    const baseDelay = 150;
+
+    if (word.endsWith(".") || word.endsWith("?") || word.endsWith("!")) {
+      return 600;
+    }
+
+    if (word.endsWith(",")) {
+      return 300;
+    }
+
+    const lengthFactor = Math.min(word.length / 6, 1);
+    const variance = Math.random() * 50;
+
+    return Math.floor(baseDelay + lengthFactor * 40 + variance);
+  };
+
+  // Handle chamber interaction
+  const handleChamberClick = (index: number) => {
+    if (!chambers[index].available) return;
+
+    setExpandedChamber(expandedChamber === index ? null : index);
+
+    // Auto-advance after chamber exploration
+    if (expandedChamber === null) {
+      setTimeout(() => {
+        onComplete?.();
+        setTimeout(() => {
+          onNavigateNext?.();
+        }, 2000);
+      }, 4000);
+    }
+  };
+
+  // Chamber definitions
   const chambers = [
     {
       id: "meditation",
@@ -93,32 +192,6 @@ const ExperienceBubble: React.FC<EnhancedBubbleProps> = ({
     },
   ];
 
-  // Handle stream completion
-  const handleStreamComplete = () => {
-    console.log(
-      "✨ Experience Bubble: Streaming complete, moving to interactive"
-    );
-    setPhase("interactive");
-    onStreamComplete?.();
-  };
-
-  // Handle chamber interaction
-  const handleChamberClick = (index: number) => {
-    if (!chambers[index].available) return;
-
-    setExpandedChamber(expandedChamber === index ? null : index);
-
-    // Auto-advance after chamber exploration
-    if (expandedChamber === null) {
-      setTimeout(() => {
-        onComplete?.();
-        setTimeout(() => {
-          onNavigateNext?.();
-        }, 2000);
-      }, 4000);
-    }
-  };
-
   // PHASE 1: STREAMING
   if (phase === "streaming") {
     return (
@@ -132,8 +205,7 @@ const ExperienceBubble: React.FC<EnhancedBubbleProps> = ({
         {...bubbleProps}
       >
         <div className="w-full h-full flex flex-col items-center justify-center p-8">
-          {/* Streaming waiting indicator */}
-          {!streamingTriggered && useAI && (
+          {!content && (
             <div className="text-center space-y-6">
               <div className="w-16 h-16 mx-auto">
                 <div className="w-full h-full border-4 border-breathing-pink/30 border-t-breathing-pink rounded-full animate-spin"></div>
@@ -144,20 +216,48 @@ const ExperienceBubble: React.FC<EnhancedBubbleProps> = ({
             </div>
           )}
 
-          {/* Sacred streaming content */}
-          {(streamingTriggered || !useAI) && (
+          {content && (
             <div className="flex-1 flex items-center justify-center max-w-3xl w-full">
-              <StreamingText
-                content={useAI ? null : defaultContent}
-                userContext={userContext}
-                useAI={useAI && streamingTriggered}
-                section="chambers"
-                bubbleId="experience"
-                fallbackContent={defaultContent}
-                className="text-center"
-                onStreamComplete={handleStreamComplete}
-                shouldStartStreaming={shouldStartStreaming}
-              />
+              <div className="text-center">
+                <p
+                  className={cn(
+                    "text-2xl md:text-3xl font-light leading-relaxed text-slate-700",
+                    "transition-opacity duration-500"
+                  )}
+                >
+                  {displayedWords.map((word, wordIndex) => (
+                    <span
+                      key={wordIndex}
+                      className="inline-block transition-all duration-300 hover:text-stone cursor-default mr-2"
+                    >
+                      {word}
+                    </span>
+                  ))}
+                </p>
+
+                {isStreaming && displayedWords.length > 0 && (
+                  <div className="mt-4 flex justify-center">
+                    <div className="w-1 h-6 bg-breathing-pink animate-pulse rounded-full" />
+                  </div>
+                )}
+
+                {content.isAI && !isStreaming && (
+                  <div className="mt-6 text-center animate-breathe-in">
+                    <p className="text-xs text-slate-500 italic">
+                      ✨ AI Personalized
+                    </p>
+                  </div>
+                )}
+
+                {content.rateLimited && (
+                  <div className="mt-6 p-4 bg-breathing-gold/10 border-l-4 border-breathing-gold rounded-r-lg">
+                    <p className="text-sm text-slate-600 italic">
+                      ✨ Your personalized journey continues tomorrow. Universal
+                      experience below.
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -176,21 +276,21 @@ const ExperienceBubble: React.FC<EnhancedBubbleProps> = ({
       isComplete={isComplete}
       {...bubbleProps}
     >
-      <div className="w-full h-full flex flex-col items-center justify-center space-y-10 p-8">
+      <div className="w-full h-full flex flex-col items-center justify-center space-y-12 p-8">
         {/* Header */}
         <div className="text-center space-y-4">
-          <h2 className="text-2xl font-semibold text-stone">Four Chambers</h2>
+          <h2 className="text-3xl font-semibold text-stone">Four Chambers</h2>
           <div className="w-16 h-1 bg-gradient-to-r from-breathing-green to-breathing-pink mx-auto rounded-full" />
         </div>
 
-        {/* MINIMAL: Chamber Grid */}
-        <div className="grid grid-cols-2 gap-6 max-w-lg w-full">
+        {/* Chamber Grid */}
+        <div className="grid grid-cols-2 gap-8 max-w-2xl w-full">
           {chambers.map((chamber, index) => (
             <div
               key={chamber.id}
               className={cn(
                 "relative cursor-pointer transition-all duration-500 ease-out",
-                "flex flex-col items-center space-y-3",
+                "flex flex-col items-center space-y-4",
                 {
                   "scale-110 z-10": expandedChamber === index,
                   "scale-95 opacity-60":
@@ -203,9 +303,9 @@ const ExperienceBubble: React.FC<EnhancedBubbleProps> = ({
               {/* Chamber Orb */}
               <div
                 className={cn(
-                  "w-20 h-20 rounded-full bg-gradient-to-br",
+                  "w-24 h-24 rounded-full bg-gradient-to-br",
                   chamber.color,
-                  "flex items-center justify-center text-3xl",
+                  "flex items-center justify-center text-4xl",
                   "shadow-lg transition-all duration-500",
                   {
                     "hover:shadow-xl hover:scale-105": chamber.available,
@@ -216,7 +316,6 @@ const ExperienceBubble: React.FC<EnhancedBubbleProps> = ({
               >
                 {chamber.icon}
 
-                {/* Availability Badge */}
                 {!chamber.available && (
                   <div className="absolute -top-1 -right-1 bg-white/90 rounded-full px-2 py-1 text-xs text-slate-600 font-medium">
                     Soon
@@ -226,22 +325,22 @@ const ExperienceBubble: React.FC<EnhancedBubbleProps> = ({
 
               {/* Chamber Info */}
               <div className="text-center">
-                <h3 className="text-base font-semibold text-stone mb-1">
+                <h3 className="text-lg font-semibold text-stone mb-1">
                   {chamber.name}
                 </h3>
-                <p className="text-slate-600 text-xs">{chamber.description}</p>
+                <p className="text-slate-600 text-sm">{chamber.description}</p>
               </div>
 
               {/* Expanded Details */}
               {expandedChamber === index && (
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="bg-white/90 backdrop-blur-md border border-white/50 rounded-2xl p-4 text-center shadow-2xl max-w-xs">
-                    <div className="space-y-2">
-                      <div className="text-2xl">{chamber.icon}</div>
-                      <h3 className="text-lg font-semibold text-stone">
+                  <div className="bg-white/90 backdrop-blur-md border border-white/50 rounded-3xl p-6 text-center shadow-2xl">
+                    <div className="space-y-3">
+                      <div className="text-3xl">{chamber.icon}</div>
+                      <h3 className="text-xl font-semibold text-stone">
                         {chamber.name}
                       </h3>
-                      <p className="text-slate-700 text-xs leading-relaxed">
+                      <p className="text-slate-700 text-sm leading-relaxed max-w-xs">
                         {chamber.id === "meditation" &&
                           "Touch-responsive breathing orb that learns your rhythm. Technology as meditation partner."}
                         {chamber.id === "contemplation" &&
@@ -279,18 +378,6 @@ const ExperienceBubble: React.FC<EnhancedBubbleProps> = ({
             <div className="flex items-center space-x-2 text-slate-500 text-sm">
               <span>Join the journey</span>
               <div className="w-1 h-1 bg-breathing-pink rounded-full animate-pulse" />
-            </div>
-          </div>
-        )}
-
-        {/* AI personalization indicator */}
-        {useAI && hasStreamedBefore && (
-          <div className="absolute top-8 right-8">
-            <div className="flex items-center space-x-2 bg-breathing-pink/20 backdrop-blur-sm rounded-full px-3 py-1">
-              <div className="w-2 h-2 bg-breathing-pink rounded-full animate-pulse"></div>
-              <span className="text-xs text-stone font-medium">
-                Personalized
-              </span>
             </div>
           </div>
         )}
