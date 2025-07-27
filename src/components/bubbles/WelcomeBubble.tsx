@@ -1,5 +1,5 @@
-// src/components/bubbles/WelcomeBubble.tsx - SELAH Welcome Bubble - SIMPLIFIED
-// Technology that breathes with you - Minimal entry with single question
+// src/components/bubbles/WelcomeBubble.tsx - SELAH Welcome Bubble - SELF-CONTAINED
+// Technology that breathes with you - Pure, focused entry experience
 
 "use client";
 
@@ -22,7 +22,7 @@ const WelcomeBubble: React.FC<WelcomeBubbleProps> = ({
   onNavigateNext,
   onComplete,
   onContextSubmit,
-  onJumpToSignup,
+  onJumpToSignup, // Accept but don't use - for compatibility
   bubbleIndex = 0,
   isActive = false,
   isComplete = false,
@@ -58,27 +58,16 @@ const WelcomeBubble: React.FC<WelcomeBubbleProps> = ({
       {...bubbleProps}
     >
       <div className="w-full h-full flex flex-col items-center justify-center p-8">
-        {/* Top Navigation - Clean & Minimal */}
+        {/* Sacred Brand Mark - Minimal */}
         {!contextSubmitted && (
-          <div className="absolute top-8 left-1/2 transform -translate-x-1/2 z-20">
-            <div className="flex items-center space-x-8">
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-stone rounded-full flex items-center justify-center text-white font-bold animate-breathe text-sm">
-                  S
-                </div>
-                <span className="text-stone font-semibold tracking-wide">
-                  SELAH
-                </span>
+          <div className="absolute top-8 left-1/2 transform -translate-x-1/2">
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-stone rounded-full flex items-center justify-center text-white font-bold animate-breathe text-sm">
+                S
               </div>
-
-              {onJumpToSignup && (
-                <button
-                  onClick={onJumpToSignup}
-                  className="text-slate-600 hover:text-stone transition-colors text-sm font-medium"
-                >
-                  Just sign me up
-                </button>
-              )}
+              <span className="text-stone font-semibold tracking-wide">
+                SELAH
+              </span>
             </div>
           </div>
         )}
@@ -96,7 +85,20 @@ const WelcomeBubble: React.FC<WelcomeBubbleProps> = ({
                 <div className="w-24 h-1 bg-gradient-to-r from-breathing-green to-breathing-blue mx-auto rounded-full" />
               </div>
 
-              {/* Sacred Context Form - Main Focus */}
+              {/* Sacred Question */}
+              <div className="space-y-6">
+                <h2 className="text-xl text-slate-700 font-light leading-relaxed max-w-lg mx-auto">
+                  How did you find us and what do you know about Selah
+                  <br />
+                  and contemplative technology?
+                </h2>
+                <p className="text-sm text-slate-500 italic">
+                  This helps create a more personal experience, or continue
+                  without
+                </p>
+              </div>
+
+              {/* Sacred Context Form */}
               <div className="w-full max-w-xl">
                 <ContextForm
                   onSubmit={handleContextSubmit}
@@ -123,28 +125,17 @@ const WelcomeBubble: React.FC<WelcomeBubbleProps> = ({
                     ? "Creating your experience..."
                     : "Beginning the universal journey..."}
                 </h2>
-                <p className="text-slate-600">
+                <p className="text-slate-600 max-w-md mx-auto leading-relaxed">
                   {userContext.trim()
                     ? "Breathing your context into contemplative technology..."
-                    : "Technology that serves consciousness awaits..."}
+                    : "The universal journey is equally profound..."}
                 </p>
               </div>
             </div>
           )}
         </div>
 
-        {/* Sacred Session Recognition */}
-        {sessionData && sessionData.breathInteractions > 0 && (
-          <div className="absolute bottom-8 left-8 inline-flex items-center space-x-3 bg-white/60 backdrop-blur-sm rounded-full px-4 py-2 animate-breathe-in">
-            <div className="w-2 h-2 bg-breathing-green rounded-full animate-pulse" />
-            <span className="text-stone text-sm font-medium">
-              {sessionData.breathInteractions} breath
-              {sessionData.breathInteractions === 1 ? "" : "s"} shared
-            </span>
-          </div>
-        )}
-
-        {/* Navigation hint - only show when ready to continue */}
+        {/* Subtle Navigation Hint */}
         {contextSubmitted && (
           <div className="absolute bottom-8 right-8 animate-breathe">
             <div className="flex items-center space-x-2 text-slate-500 text-sm">
@@ -152,11 +143,6 @@ const WelcomeBubble: React.FC<WelcomeBubbleProps> = ({
               <div className="w-1 h-1 bg-breathing-green rounded-full animate-pulse" />
             </div>
           </div>
-        )}
-
-        {/* Completion indicator */}
-        {contextSubmitted && (
-          <div className="absolute top-8 right-8 w-3 h-3 rounded-full bg-breathing-green animate-pulse" />
         )}
       </div>
     </Bubble>
