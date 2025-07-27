@@ -1,4 +1,4 @@
-// src/lib/claude-client.ts - SELAH Claude Client Configuration
+// src/lib/claude-client.ts - SELAH Claude Client Configuration - FIXED
 // Technology that breathes with you
 // Sacred contemplative prompting system
 
@@ -11,18 +11,11 @@ import type {
 } from "./types";
 
 /**
- * Initialize Claude client with configuration
- */
-export const claudeClient = anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY!,
-});
-
-/**
  * Get the configured Claude model
  */
 export function getClaudeModel() {
   const modelId = process.env.CLAUDE_MODEL || "claude-sonnet-4-20250514";
-  return claudeClient(modelId);
+  return anthropic(modelId);
 }
 
 /**

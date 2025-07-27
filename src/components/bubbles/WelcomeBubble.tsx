@@ -1,4 +1,4 @@
-// src/components/bubbles/WelcomeBubble.tsx - SELAH Welcome Bubble
+// src/components/bubbles/WelcomeBubble.tsx - SELAH Welcome Bubble - FIXED
 // Technology that breathes with you - Sacred entry space with breathing orb
 
 "use client";
@@ -26,6 +26,8 @@ const WelcomeBubble: React.FC<WelcomeBubbleProps> = ({
   onContextSubmit,
   onJumpToSignup,
   bubbleIndex = 0,
+  isActive = false,
+  isComplete = false,
   ...bubbleProps
 }) => {
   const [hasInteracted, setHasInteracted] = useState(false);
@@ -83,11 +85,13 @@ const WelcomeBubble: React.FC<WelcomeBubbleProps> = ({
       color="green"
       size="full"
       breathing={true}
+      isActive={isActive}
+      isComplete={isComplete}
       {...bubbleProps}
     >
       <div className="w-full h-full flex flex-col items-center justify-center space-y-8 p-8">
         {/* Top Navigation - Only show if not active or just activated */}
-        {(!bubbleProps.isActive || !hasInteracted) && (
+        {(!isActive || !hasInteracted) && (
           <div className="absolute top-6 left-1/2 transform -translate-x-1/2 z-20">
             <div className="nav-contemplative flex items-center space-x-8">
               <div className="flex items-center space-x-2">

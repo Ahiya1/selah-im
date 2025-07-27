@@ -1,4 +1,4 @@
-// src/components/bubbles/JoinBubble.tsx - SELAH Join Bubble
+// src/components/bubbles/JoinBubble.tsx - SELAH Join Bubble - FIXED
 // Technology that breathes with you - Sacred journey completion and invitation
 
 "use client";
@@ -15,6 +15,8 @@ const JoinBubble: React.FC<BubbleProps> = ({
   sessionData,
   onComplete,
   bubbleIndex = 3,
+  isActive = false,
+  isComplete = false,
   ...bubbleProps
 }) => {
   const [email, setEmail] = useState("");
@@ -91,6 +93,8 @@ const JoinBubble: React.FC<BubbleProps> = ({
         color="blue"
         size="full"
         breathing={true}
+        isActive={isActive}
+        isComplete={isComplete}
         {...bubbleProps}
       >
         <div className="w-full h-full flex flex-col items-center justify-center space-y-8 p-8">
@@ -206,6 +210,8 @@ const JoinBubble: React.FC<BubbleProps> = ({
       color="blue"
       size="full"
       breathing={true}
+      isActive={isActive}
+      isComplete={isComplete}
       {...bubbleProps}
     >
       <div className="w-full h-full flex flex-col items-center justify-center space-y-12 p-8">

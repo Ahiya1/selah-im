@@ -1,4 +1,4 @@
-// src/lib/types.ts - SELAH Enhanced TypeScript Definitions
+// src/lib/types.ts - SELAH Enhanced TypeScript Definitions - FIXED
 // Technology that breathes with you
 // Type-safe contemplative data structures with Claude AI integration
 
@@ -63,6 +63,10 @@ export interface BubbleProps {
   onNavigateNext?: () => void;
   onNavigatePrev?: () => void;
   onComplete?: () => void;
+  // Fixed: Made these optional to match component usage
+  bubbleIndex?: number;
+  isActive?: boolean;
+  isComplete?: boolean;
 }
 
 export interface BubbleContainerState {
@@ -214,7 +218,8 @@ export interface StreamingTextProps {
   section?: "recognition" | "chambers" | "philosophy" | "invitation";
   onStreamComplete?: () => void;
   bubbleId?: string;
-  fallbackContent?: string;
+  // Fixed: Changed to accept both string and object
+  fallbackContent?: string | any;
 }
 
 export interface StreamingTextState {
@@ -254,8 +259,8 @@ export interface BubbleRef {
 export interface AdminDashboardData {
   emails: EmailSubmission[];
   analytics: AnalyticsSummary;
-  aiUsage: AIUsageSummary;
-  rateLimiting: RateLimitingSummary;
+  aiUsage?: AIUsageSummary;
+  rateLimiting?: RateLimitingSummary;
   exportData: ExportData;
   lastUpdated: string;
 }
@@ -288,8 +293,8 @@ export interface AnalyticsSummary {
   totalSessions: number;
   averageTimeSpent: number;
   totalOrbInteractions: number;
-  bubbleCompletionRates: Record<number, number>;
-  aiPersonalizationRate: number;
+  bubbleCompletionRates?: Record<number, number>;
+  aiPersonalizationRate?: number;
   topSources: Array<{
     source: EmailSource;
     count: number;
@@ -305,8 +310,8 @@ export interface DailyStats {
   sessions: number;
   avgTimeSpent: number;
   orbInteractions: number;
-  aiRequests: number;
-  bubbleCompletions: number;
+  aiRequests?: number;
+  bubbleCompletions?: number;
 }
 
 export interface EngagementTrend {

@@ -1,4 +1,4 @@
-// src/components/ui/BubbleContainer.tsx - SELAH Bubble Navigation Container
+// src/components/ui/BubbleContainer.tsx - SELAH Bubble Navigation Container - FIXED
 // Technology that breathes with you
 // Sacred navigation system between contemplative bubbles
 
@@ -133,7 +133,8 @@ const BubbleContainer: React.FC<BubbleContainerProps> = ({
       setState((prev) => ({
         ...prev,
         completedBubbles: [
-          ...new Set([...prev.completedBubbles, indexToComplete]),
+          ...prev.completedBubbles.filter((i) => i !== indexToComplete),
+          indexToComplete,
         ],
       }));
     },
@@ -282,7 +283,9 @@ const BubbleContainer: React.FC<BubbleContainerProps> = ({
         {children.map((child, index) => (
           <div
             key={index}
-            ref={(el) => (bubbleRefs.current[index] = el)}
+            ref={(el) => {
+              bubbleRefs.current[index] = el;
+            }}
             className={cn(
               "w-full h-screen flex items-center justify-center snap-center",
               "transition-all duration-1000 ease-out",

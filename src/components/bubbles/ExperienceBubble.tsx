@@ -1,4 +1,4 @@
-// src/components/bubbles/ExperienceBubble.tsx - SELAH Experience Bubble
+// src/components/bubbles/ExperienceBubble.tsx - SELAH Experience Bubble - FIXED
 // Technology that breathes with you - Sacred chamber preview and exploration
 
 "use client";
@@ -16,6 +16,8 @@ const ExperienceBubble: React.FC<BubbleProps> = ({
   onNavigateNext,
   onComplete,
   bubbleIndex = 2,
+  isActive = false,
+  isComplete = false,
   ...bubbleProps
 }) => {
   const [visibleChambers, setVisibleChambers] = useState(0);
@@ -24,14 +26,14 @@ const ExperienceBubble: React.FC<BubbleProps> = ({
 
   // Animate chambers appearing when bubble becomes active
   useEffect(() => {
-    if (bubbleProps.isActive && contentComplete) {
+    if (isActive && contentComplete) {
       const timer = setInterval(() => {
         setVisibleChambers((prev) => (prev < 4 ? prev + 1 : prev));
       }, 800);
 
       return () => clearInterval(timer);
     }
-  }, [bubbleProps.isActive, contentComplete]);
+  }, [isActive, contentComplete]);
 
   const chambers = [
     {
@@ -142,6 +144,8 @@ const ExperienceBubble: React.FC<BubbleProps> = ({
       color="purple"
       size="full"
       breathing={true}
+      isActive={isActive}
+      isComplete={isComplete}
       {...bubbleProps}
     >
       <div className="w-full h-full flex flex-col items-center justify-center space-y-8 p-8">
@@ -288,10 +292,9 @@ const ExperienceBubble: React.FC<BubbleProps> = ({
   );
 };
 
-export default ExperienceBubble;
-
 // Additional styles for bubble-specific chamber layout
-const chamberStyles = `
+// These styles should be added to your global CSS file (globals.css)
+/*
 .chamber-grid-bubble {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -378,4 +381,6 @@ const chamberStyles = `
   opacity: 0;
   transform: translateY(-10px);
 }
-`;
+*/
+
+export default ExperienceBubble;

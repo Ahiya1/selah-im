@@ -1,4 +1,4 @@
-// src/components/bubbles/PhilosophyBubble.tsx - SELAH Philosophy Bubble
+// src/components/bubbles/PhilosophyBubble.tsx - SELAH Philosophy Bubble - FIXED
 // Technology that breathes with you - Sacred recognition and understanding
 
 "use client";
@@ -16,6 +16,8 @@ const PhilosophyBubble: React.FC<BubbleProps> = ({
   onNavigateNext,
   onComplete,
   bubbleIndex = 1,
+  isActive = false,
+  isComplete = false,
   ...bubbleProps
 }) => {
   const [currentQuote, setCurrentQuote] = useState(0);
@@ -23,7 +25,7 @@ const PhilosophyBubble: React.FC<BubbleProps> = ({
   const [contentComplete, setContentComplete] = useState(false);
 
   useEffect(() => {
-    if (bubbleProps.isActive) {
+    if (isActive) {
       setIsVisible(true);
 
       // Cycle through contemplative quotes
@@ -33,7 +35,7 @@ const PhilosophyBubble: React.FC<BubbleProps> = ({
 
       return () => clearInterval(quoteTimer);
     }
-  }, [bubbleProps.isActive]);
+  }, [isActive]);
 
   const contemplativeQuotes = [
     {
@@ -83,6 +85,8 @@ const PhilosophyBubble: React.FC<BubbleProps> = ({
       color="orange"
       size="full"
       breathing={true}
+      isActive={isActive}
+      isComplete={isComplete}
       {...bubbleProps}
     >
       <div className="w-full h-full flex flex-col items-center justify-center space-y-12 p-8">
