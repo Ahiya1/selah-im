@@ -1,6 +1,6 @@
-// src/app/api/emails/route.ts - SELAH Email Collection API with Supabase
+// src/app/api/emails/route.ts - SELAH Email Collection API with Context Storage
 // Technology that breathes with you
-// Real email storage and validation using Supabase
+// Real email storage and validation using Supabase with context tracking
 
 import { NextRequest, NextResponse } from "next/server";
 import { supabase, supabaseAdmin } from "../../../lib/supbase";
@@ -9,7 +9,13 @@ import type { EmailSubmission, ApiResponse } from "@/lib/types";
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const body = await request.json();
-    const { email, source = "landing-page", context = null } = body;
+    const {
+      email,
+      source = "landing-page",
+      context = null,
+      userContext = null, // NEW: User's context answer
+      sessionId = null,
+    } = body;
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -68,12 +74,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       request.headers.get("x-real-ip") ||
       "unknown";
 
-    const engagementData = {
+    // Simple metadata object (not EngagementData type)
+    const engagementMetadata = {
       userAgent,
       referer,
       ipAddress: ipAddress.split(",")[0], // Take first IP if multiple
       source,
       context,
+      userContext, // NEW: Store the user's context answer
+      sessionId,
       timestamp: new Date().toISOString(),
     };
 
@@ -83,7 +92,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       .insert({
         email: cleanEmail,
         source,
-        engagement_data: engagementData,
+        engagement_data: engagementMetadata,
       })
       .select("id, created_at")
       .single();
@@ -107,6 +116,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         timestamp: newEmail.created_at,
         source,
         validated: true,
+        engagement: engagementMetadata,
       },
       message: "Welcome to the contemplative journey",
       timestamp: new Date().toISOString(),
@@ -198,10 +208,31 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       engagement: row.engagement_data,
     }));
 
+    // NEW: Calculate context statistics for admin dashboard
+    const contextStats = {
+      totalWithContext: formattedEmails.filter(
+        (email) => (email.engagement as any)?.userContext
+      ).length,
+      totalWithoutContext: formattedEmails.filter(
+        (email) => !(email.engagement as any)?.userContext
+      ).length,
+      contextsProvidedRate:
+        total > 0
+          ? (
+              (formattedEmails.filter(
+                (email) => (email.engagement as any)?.userContext
+              ).length /
+                total) *
+              100
+            ).toFixed(1)
+          : "0",
+    };
+
     const response: ApiResponse = {
       success: true,
       data: {
         emails: formattedEmails,
+        contextStats, // NEW: Include context statistics
         pagination: {
           page,
           limit,

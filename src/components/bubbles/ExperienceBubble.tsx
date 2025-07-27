@@ -1,5 +1,5 @@
-// src/components/bubbles/ExperienceBubble.tsx - SELAH Experience Bubble - MINIMAL TWO-PHASE CHAMBERS
-// Technology that breathes with you - Stream then explore chambers
+// src/components/bubbles/ExperienceBubble.tsx - SELAH Experience Bubble - FIXED TIMING
+// Technology that breathes with you - Proper two-phase orchestration
 
 "use client";
 
@@ -28,22 +28,29 @@ const ExperienceBubble: React.FC<EnhancedBubbleProps> = ({
   const [streamingTriggered, setStreamingTriggered] = useState(false);
   const [expandedChamber, setExpandedChamber] = useState<number | null>(null);
 
-  // Handle orchestration - trigger streaming when orchestrator says so
+  // FIXED: Handle orchestration - only trigger streaming when explicitly told
   useEffect(() => {
-    if (shouldStartStreaming && !streamingTriggered && !hasStreamedBefore) {
+    if (shouldStartStreaming && !streamingTriggered && isActive) {
       console.log("🏛️ Experience Bubble: Starting AI streaming...");
       setStreamingTriggered(true);
       setPhase("streaming");
     }
-  }, [shouldStartStreaming, streamingTriggered, hasStreamedBefore]);
+  }, [shouldStartStreaming, streamingTriggered, isActive]);
 
-  // If already streamed before, go straight to interactive
+  // FIXED: Only return to interactive if we've actually streamed before AND we're not currently supposed to stream
   useEffect(() => {
-    if (hasStreamedBefore && isActive) {
+    if (hasStreamedBefore && isActive && !shouldStartStreaming) {
       console.log("🏛️ Experience Bubble: Returning to interactive phase");
       setPhase("interactive");
     }
-  }, [hasStreamedBefore, isActive]);
+  }, [hasStreamedBefore, isActive, shouldStartStreaming]);
+
+  // FIXED: Reset streaming state when bubble becomes inactive
+  useEffect(() => {
+    if (!isActive) {
+      setStreamingTriggered(false);
+    }
+  }, [isActive]);
 
   // MINIMAL: Default templated content
   const defaultContent = {
@@ -169,21 +176,21 @@ const ExperienceBubble: React.FC<EnhancedBubbleProps> = ({
       isComplete={isComplete}
       {...bubbleProps}
     >
-      <div className="w-full h-full flex flex-col items-center justify-center space-y-12 p-8">
+      <div className="w-full h-full flex flex-col items-center justify-center space-y-10 p-8">
         {/* Header */}
         <div className="text-center space-y-4">
-          <h2 className="text-3xl font-semibold text-stone">Four Chambers</h2>
+          <h2 className="text-2xl font-semibold text-stone">Four Chambers</h2>
           <div className="w-16 h-1 bg-gradient-to-r from-breathing-green to-breathing-pink mx-auto rounded-full" />
         </div>
 
         {/* MINIMAL: Chamber Grid */}
-        <div className="grid grid-cols-2 gap-8 max-w-2xl w-full">
+        <div className="grid grid-cols-2 gap-6 max-w-lg w-full">
           {chambers.map((chamber, index) => (
             <div
               key={chamber.id}
               className={cn(
                 "relative cursor-pointer transition-all duration-500 ease-out",
-                "flex flex-col items-center space-y-4",
+                "flex flex-col items-center space-y-3",
                 {
                   "scale-110 z-10": expandedChamber === index,
                   "scale-95 opacity-60":
@@ -196,9 +203,9 @@ const ExperienceBubble: React.FC<EnhancedBubbleProps> = ({
               {/* Chamber Orb */}
               <div
                 className={cn(
-                  "w-24 h-24 rounded-full bg-gradient-to-br",
+                  "w-20 h-20 rounded-full bg-gradient-to-br",
                   chamber.color,
-                  "flex items-center justify-center text-4xl",
+                  "flex items-center justify-center text-3xl",
                   "shadow-lg transition-all duration-500",
                   {
                     "hover:shadow-xl hover:scale-105": chamber.available,
@@ -219,22 +226,22 @@ const ExperienceBubble: React.FC<EnhancedBubbleProps> = ({
 
               {/* Chamber Info */}
               <div className="text-center">
-                <h3 className="text-lg font-semibold text-stone mb-1">
+                <h3 className="text-base font-semibold text-stone mb-1">
                   {chamber.name}
                 </h3>
-                <p className="text-slate-600 text-sm">{chamber.description}</p>
+                <p className="text-slate-600 text-xs">{chamber.description}</p>
               </div>
 
               {/* Expanded Details */}
               {expandedChamber === index && (
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="bg-white/90 backdrop-blur-md border border-white/50 rounded-3xl p-6 text-center shadow-2xl">
-                    <div className="space-y-3">
-                      <div className="text-3xl">{chamber.icon}</div>
-                      <h3 className="text-xl font-semibold text-stone">
+                  <div className="bg-white/90 backdrop-blur-md border border-white/50 rounded-2xl p-4 text-center shadow-2xl max-w-xs">
+                    <div className="space-y-2">
+                      <div className="text-2xl">{chamber.icon}</div>
+                      <h3 className="text-lg font-semibold text-stone">
                         {chamber.name}
                       </h3>
-                      <p className="text-slate-700 text-sm leading-relaxed max-w-xs">
+                      <p className="text-slate-700 text-xs leading-relaxed">
                         {chamber.id === "meditation" &&
                           "Touch-responsive breathing orb that learns your rhythm. Technology as meditation partner."}
                         {chamber.id === "contemplation" &&

@@ -1,5 +1,5 @@
-// src/app/page.tsx - SELAH Sacred Bubble Journey Landing Page - ORCHESTRATED
-// Technology that breathes with you - Four contemplative bubbles with AI orchestration
+// src/app/page.tsx - SELAH Sacred Bubble Journey Landing Page - FIXED ORCHESTRATION
+// Technology that breathes with you - Four contemplative bubbles with proper AI timing
 
 "use client";
 
@@ -9,7 +9,6 @@ import type {
   EngagementData,
   BubbleJourneyData,
   BubbleOrchestrationState,
-  BubbleStreamingState,
 } from "@/lib/types";
 
 // Real Bubble Components
@@ -26,7 +25,7 @@ export default function SelahHomePage(): JSX.Element {
   const [sessionData, setSessionData] = useState<EngagementData | null>(null);
   const [currentBubble, setCurrentBubble] = useState<number>(0);
 
-  // NEW: Bubble orchestration state
+  // FIXED: Bubble orchestration state - only tracks streaming status
   const [bubbleStates, setBubbleStates] = useState<BubbleOrchestrationState>({
     1: { shouldStream: false, hasStreamed: false }, // Philosophy
     2: { shouldStream: false, hasStreamed: false }, // Experience
@@ -103,19 +102,28 @@ export default function SelahHomePage(): JSX.Element {
     return () => clearInterval(interval);
   }, [currentBubble]);
 
-  // Handle context submission from Welcome bubble
-  const handleContextSubmit = (context: string) => {
+  // FIXED: Handle context submission - NO PRE-STREAMING
+  const handleContextSubmit = async (context: string) => {
     const hasContext = context.trim().length > 0;
 
     setUserContext(context);
     setUseAI(hasContext);
 
-    // NEW: Prepare bubbles for AI streaming if context provided
+    // Store context in database
     if (hasContext) {
-      setBubbleStates({
-        1: { shouldStream: true, hasStreamed: false },
-        2: { shouldStream: true, hasStreamed: false },
-      });
+      try {
+        await fetch("/api/context", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            context: context.trim(),
+            sessionId: sessionData?.sessionId,
+            timestamp: new Date().toISOString(),
+          }),
+        });
+      } catch (error) {
+        console.warn("Failed to store context:", error);
+      }
     }
 
     setBubbleJourney((prev) => ({
@@ -125,6 +133,10 @@ export default function SelahHomePage(): JSX.Element {
         ? prev.aiInteractions + 1
         : prev.aiInteractions,
     }));
+
+    console.log(
+      `🌸 SELAH: Context ${hasContext ? "provided" : "skipped"}, AI=${hasContext}`
+    );
   };
 
   // Handle breathing interactions
@@ -139,7 +151,7 @@ export default function SelahHomePage(): JSX.Element {
     );
   };
 
-  // NEW: Enhanced bubble navigation with streaming orchestration
+  // FIXED: Enhanced bubble navigation with on-demand streaming
   const handleBubbleChange = (bubbleIndex: number) => {
     const now = Date.now();
 
@@ -155,23 +167,31 @@ export default function SelahHomePage(): JSX.Element {
       },
     }));
 
-    // NEW: Trigger streaming for Philosophy (1) and Experience (2) bubbles
-    if ((bubbleIndex === 1 || bubbleIndex === 2) && bubbleStates[bubbleIndex]) {
+    // FIXED: Only trigger streaming for the CURRENT bubble being navigated to
+    if (
+      (bubbleIndex === 1 || bubbleIndex === 2) &&
+      useAI &&
+      userContext.trim()
+    ) {
       const bubbleState = bubbleStates[bubbleIndex];
 
-      // Only mark as "should stream" if we have context and haven't streamed yet
-      if (useAI && userContext.trim() && !bubbleState.hasStreamed) {
+      // Only start streaming if we haven't already streamed for this bubble
+      if (!bubbleState.hasStreamed) {
         console.log(
-          `🌸 SELAH: Triggering AI streaming for bubble ${bubbleIndex}`
+          `🌸 SELAH: Triggering AI streaming for bubble ${bubbleIndex} on navigation`
         );
 
         setBubbleStates((prev) => ({
           ...prev,
           [bubbleIndex]: {
-            ...prev[bubbleIndex],
             shouldStream: true,
+            hasStreamed: false,
           },
         }));
+      } else {
+        console.log(
+          `🌸 SELAH: Bubble ${bubbleIndex} already streamed, showing interactive`
+        );
       }
     }
 
@@ -196,13 +216,13 @@ export default function SelahHomePage(): JSX.Element {
     );
   };
 
-  // NEW: Handle when bubble completes streaming
+  // FIXED: Handle when bubble completes streaming
   const handleBubbleStreamComplete = (bubbleIndex: number) => {
     if (bubbleIndex === 1 || bubbleIndex === 2) {
       setBubbleStates((prev) => ({
         ...prev,
         [bubbleIndex]: {
-          ...prev[bubbleIndex],
+          shouldStream: false,
           hasStreamed: true,
         },
       }));
@@ -245,7 +265,7 @@ export default function SelahHomePage(): JSX.Element {
     return bubbleIds[index] || "unknown";
   };
 
-  // NEW: Enhanced shared props with orchestration data
+  // FIXED: Enhanced shared props with proper orchestration timing
   const getBubbleProps = (bubbleIndex: number) => {
     const baseProps = {
       userContext,
@@ -260,8 +280,11 @@ export default function SelahHomePage(): JSX.Element {
 
       return {
         ...baseProps,
+        // FIXED: Only trigger streaming if currently on this bubble and should stream
         shouldStartStreaming:
-          bubbleState?.shouldStream && !bubbleState?.hasStreamed,
+          bubbleState?.shouldStream &&
+          currentBubble === bubbleIndex &&
+          !bubbleState?.hasStreamed,
         hasStreamedBefore: bubbleState?.hasStreamed || false,
         onStreamComplete: () => handleBubbleStreamComplete(bubbleIndex),
       };
@@ -295,10 +318,10 @@ export default function SelahHomePage(): JSX.Element {
           onJumpToSignup={jumpToSignup}
         />
 
-        {/* Bubble 2: Philosophy & Recognition - NOW WITH AI ORCHESTRATION */}
+        {/* Bubble 2: Philosophy & Recognition - FIXED ORCHESTRATION */}
         <PhilosophyBubble {...getBubbleProps(1)} />
 
-        {/* Bubble 3: Experience & Chambers - NOW WITH AI ORCHESTRATION */}
+        {/* Bubble 3: Experience & Chambers - FIXED ORCHESTRATION */}
         <ExperienceBubble {...getBubbleProps(2)} />
 
         {/* Bubble 4: Invitation & Signup */}
@@ -335,7 +358,7 @@ export default function SelahHomePage(): JSX.Element {
         />
       </div>
 
-      {/* NEW: Preload Claude API for upcoming bubbles */}
+      {/* FIXED: Preload Claude API only for next bubble */}
       {useAI && userContext && currentBubble < 3 && (
         <link
           rel="prefetch"
@@ -360,6 +383,7 @@ export default function SelahHomePage(): JSX.Element {
               )
               .join(" ")}
           </div>
+          <div>Current: {currentBubble}</div>
         </div>
       )}
     </div>

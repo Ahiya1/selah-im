@@ -1,5 +1,5 @@
-// src/components/bubbles/PhilosophyBubble.tsx - SELAH Philosophy Bubble - MINIMAL TWO-PHASE UX
-// Technology that breathes with you - Stream then interact
+// src/components/bubbles/PhilosophyBubble.tsx - SELAH Philosophy Bubble - FIXED TIMING
+// Technology that breathes with you - Proper two-phase orchestration
 
 "use client";
 
@@ -27,22 +27,29 @@ const PhilosophyBubble: React.FC<EnhancedBubbleProps> = ({
   const [phase, setPhase] = useState<"streaming" | "interactive">("streaming");
   const [streamingTriggered, setStreamingTriggered] = useState(false);
 
-  // Handle orchestration - trigger streaming when orchestrator says so
+  // FIXED: Handle orchestration - only trigger streaming when explicitly told
   useEffect(() => {
-    if (shouldStartStreaming && !streamingTriggered && !hasStreamedBefore) {
+    if (shouldStartStreaming && !streamingTriggered && isActive) {
       console.log("🧠 Philosophy Bubble: Starting AI streaming...");
       setStreamingTriggered(true);
       setPhase("streaming");
     }
-  }, [shouldStartStreaming, streamingTriggered, hasStreamedBefore]);
+  }, [shouldStartStreaming, streamingTriggered, isActive]);
 
-  // If already streamed before, go straight to interactive
+  // FIXED: Only return to interactive if we've actually streamed before AND we're not currently supposed to stream
   useEffect(() => {
-    if (hasStreamedBefore && isActive) {
+    if (hasStreamedBefore && isActive && !shouldStartStreaming) {
       console.log("🧠 Philosophy Bubble: Returning to interactive phase");
       setPhase("interactive");
     }
-  }, [hasStreamedBefore, isActive]);
+  }, [hasStreamedBefore, isActive, shouldStartStreaming]);
+
+  // FIXED: Reset streaming state when bubble becomes inactive
+  useEffect(() => {
+    if (!isActive) {
+      setStreamingTriggered(false);
+    }
+  }, [isActive]);
 
   // MINIMAL: Default templated content
   const defaultContent = {
@@ -124,22 +131,22 @@ const PhilosophyBubble: React.FC<EnhancedBubbleProps> = ({
       isComplete={isComplete}
       {...bubbleProps}
     >
-      <div className="w-full h-full flex flex-col items-center justify-center space-y-12 p-8">
+      <div className="w-full h-full flex flex-col items-center justify-center space-y-10 p-8">
         {/* Header */}
         <div className="text-center space-y-4">
-          <h2 className="text-3xl font-semibold text-stone">Recognition</h2>
+          <h2 className="text-2xl font-semibold text-stone">Recognition</h2>
           <div className="w-16 h-1 bg-gradient-to-r from-breathing-green to-breathing-blue mx-auto rounded-full" />
         </div>
 
         {/* MINIMAL: Technology Comparison */}
-        <div className="grid grid-cols-2 gap-16 max-w-4xl w-full">
+        <div className="grid grid-cols-2 gap-12 max-w-3xl w-full">
           {/* Extractive Technology */}
-          <div className="text-center space-y-6">
-            <div className="w-20 h-20 mx-auto bg-red-100 rounded-full flex items-center justify-center">
-              <span className="text-4xl">📱</span>
+          <div className="text-center space-y-4">
+            <div className="w-16 h-16 mx-auto bg-red-100 rounded-full flex items-center justify-center">
+              <span className="text-3xl">📱</span>
             </div>
             <div className="space-y-3">
-              <h3 className="text-xl font-semibold text-stone">Extractive</h3>
+              <h3 className="text-lg font-semibold text-stone">Extractive</h3>
               <div className="space-y-2 text-slate-600">
                 <div className="flex items-center justify-center space-x-2">
                   <span className="text-red-500">↗</span>
@@ -158,12 +165,12 @@ const PhilosophyBubble: React.FC<EnhancedBubbleProps> = ({
           </div>
 
           {/* Contemplative Technology */}
-          <div className="text-center space-y-6">
-            <div className="w-20 h-20 mx-auto bg-breathing-green/20 rounded-full flex items-center justify-center animate-breathe">
-              <span className="text-4xl">🧘</span>
+          <div className="text-center space-y-4">
+            <div className="w-16 h-16 mx-auto bg-breathing-green/20 rounded-full flex items-center justify-center animate-breathe">
+              <span className="text-3xl">🧘</span>
             </div>
             <div className="space-y-3">
-              <h3 className="text-xl font-semibold text-stone">
+              <h3 className="text-lg font-semibold text-stone">
                 Contemplative
               </h3>
               <div className="space-y-2 text-slate-600">
@@ -186,15 +193,17 @@ const PhilosophyBubble: React.FC<EnhancedBubbleProps> = ({
 
         {/* MINIMAL: Session Recognition */}
         {sessionData && sessionData.breathInteractions > 0 && (
-          <div className="bg-white/60 backdrop-blur-sm border border-white/30 rounded-2xl p-6 max-w-2xl mx-auto">
-            <div className="text-center space-y-3">
-              <p className="text-stone font-medium">You experienced this:</p>
-              <div className="flex justify-center space-x-6 text-sm text-slate-600">
-                <div className="flex items-center space-x-2">
+          <div className="bg-white/60 backdrop-blur-sm border border-white/30 rounded-2xl p-4 max-w-lg mx-auto">
+            <div className="text-center space-y-2">
+              <p className="text-stone font-medium text-sm">
+                You experienced this:
+              </p>
+              <div className="flex justify-center space-x-4 text-xs text-slate-600">
+                <div className="flex items-center space-x-1">
                   <div className="w-2 h-2 bg-breathing-green rounded-full" />
                   <span>{sessionData.breathInteractions} shared breaths</span>
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-1">
                   <div className="w-2 h-2 bg-breathing-blue rounded-full" />
                   <span>
                     {Math.floor((sessionData?.timeSpent || 0) / 60)} minutes
@@ -202,7 +211,7 @@ const PhilosophyBubble: React.FC<EnhancedBubbleProps> = ({
                   </span>
                 </div>
               </div>
-              <p className="text-slate-600 text-sm italic">
+              <p className="text-slate-600 text-xs italic">
                 Technology serving consciousness
               </p>
             </div>

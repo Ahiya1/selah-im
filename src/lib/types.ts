@@ -141,13 +141,28 @@ export interface BubbleTransition {
 // ORIGINAL EMAIL COLLECTION TYPES (Enhanced)
 // ============================================================================
 
+// Add this interface to the existing types.ts file
+// Insert this after the EmailSubmission interface
+
+export interface EmailMetadata {
+  userAgent: string;
+  referer: string;
+  ipAddress: string;
+  source: string;
+  context?: any;
+  userContext?: string; // NEW: User's context answer
+  sessionId?: string;
+  timestamp: string;
+}
+
+// Update the EmailSubmission interface to use the proper type
 export interface EmailSubmission {
   id: string;
   email: string;
   timestamp: string;
   source: EmailSource;
   validated: boolean;
-  engagement?: EngagementData;
+  engagement?: EmailMetadata; // Updated to use proper type
   aiPersonalized?: boolean;
   contextProvided?: boolean;
 }

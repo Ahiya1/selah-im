@@ -1,9 +1,9 @@
-// src/components/ui/ContextForm.tsx - SELAH Enhanced Sacred Context Form
-// Technology that breathes with you - Sacred context gathering with bubble support
+// src/components/ui/ContextForm.tsx - SELAH Simplified Context Form
+// Technology that breathes with you - Single focused question
 
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { cn } from "@/lib/utils";
 
 interface ContextFormProps {
@@ -12,7 +12,6 @@ interface ContextFormProps {
   variant?: "default" | "bubble" | "minimal";
   placeholder?: string;
   showSkipOption?: boolean;
-  bubbleContext?: boolean;
   autoFocus?: boolean;
 }
 
@@ -22,44 +21,20 @@ const ContextForm: React.FC<ContextFormProps> = ({
   variant = "default",
   placeholder = "I heard about this from... I know that...",
   showSkipOption = true,
-  bubbleContext = false,
   autoFocus = false,
 }) => {
   const [context, setContext] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [charCount, setCharCount] = useState(0);
-  const [suggestedPrompts] = useState([
-    "My therapist mentioned meditation apps...",
-    "I'm building AI products and curious about...",
-    "I've been exploring meditation but apps feel...",
-    "A friend recommended this and I'm wondering...",
-    "I'm curious about technology that doesn't...",
-  ]);
-
-  useEffect(() => {
-    setCharCount(context.length);
-  }, [context]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitted(true);
     onSubmit(context);
-
-    // Sacred visual feedback
-    setTimeout(() => {
-      setIsExpanded(false);
-    }, 500);
   };
 
   const handleSkip = () => {
     setIsSubmitted(true);
     onSubmit(""); // Empty context = use default template
-  };
-
-  const handleSuggestedPrompt = (prompt: string) => {
-    setContext(prompt);
-    setIsExpanded(true);
   };
 
   // Different styling for bubble vs regular context
@@ -101,61 +76,25 @@ const ContextForm: React.FC<ContextFormProps> = ({
         {/* Sacred Question */}
         <div className="text-center space-y-4">
           <p className="text-slate-700 text-lg leading-relaxed font-light">
-            How did you hear about this space, and what do you already know?
+            How did you find us and what do you know about Selah and
+            contemplative technology?
           </p>
           <p className="text-slate-500 text-sm italic">
-            (Optional - helps create a more personal experience)
+            This helps create a more personal experience, or continue without
           </p>
         </div>
-
-        {/* Suggested Prompts - only show in bubble variant */}
-        {variant === "bubble" && !isExpanded && context.length === 0 && (
-          <div className="space-y-3">
-            <p className="text-xs text-slate-500 text-center">
-              Or choose a starting point:
-            </p>
-            <div className="flex flex-wrap gap-2 justify-center">
-              {suggestedPrompts.slice(0, 3).map((prompt, index) => (
-                <button
-                  key={index}
-                  type="button"
-                  onClick={() => handleSuggestedPrompt(prompt)}
-                  className="text-xs px-3 py-1 bg-white/50 hover:bg-white/70 border border-white/30 rounded-full text-slate-600 hover:text-stone transition-all duration-300 hover:scale-105"
-                >
-                  {prompt.length > 30
-                    ? prompt.substring(0, 30) + "..."
-                    : prompt}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Sacred Input Field */}
         <div className="relative">
           <textarea
             value={context}
             onChange={(e) => setContext(e.target.value)}
-            onFocus={() => setIsExpanded(true)}
             placeholder={placeholder}
             autoFocus={autoFocus}
-            className={cn(
-              "input-contemplative resize-none transition-all duration-500 ease-out w-full",
-              {
-                "h-32": isExpanded || bubbleContext,
-                "h-14": !isExpanded && !bubbleContext,
-              }
-            )}
-            rows={isExpanded || bubbleContext ? 5 : 2}
-            maxLength={1000}
+            className="input-contemplative resize-none w-full h-24"
+            rows={3}
+            maxLength={500}
           />
-
-          {/* Character count indicator */}
-          {(isExpanded || context.length > 0) && (
-            <div className="absolute bottom-2 right-3 text-xs text-slate-400">
-              {charCount}/1000
-            </div>
-          )}
         </div>
 
         {/* Sacred Action Buttons */}
@@ -164,14 +103,7 @@ const ContextForm: React.FC<ContextFormProps> = ({
             <button
               type="button"
               onClick={handleSkip}
-              className={cn(
-                "flex-1 px-6 py-3 text-slate-600 glass-light hover:glass-medium",
-                "rounded-lg transition-all duration-300 text-sm font-medium",
-                "hover:transform hover:scale-105",
-                {
-                  "order-2 sm:order-1": variant === "bubble",
-                }
-              )}
+              className="flex-1 px-6 py-3 text-slate-600 glass-light hover:glass-medium rounded-lg transition-all duration-300 text-sm font-medium hover:transform hover:scale-105"
             >
               Continue without context
             </button>
@@ -179,82 +111,27 @@ const ContextForm: React.FC<ContextFormProps> = ({
 
           <button
             type="submit"
-            disabled={!context.trim()}
             className={cn(
               "flex-1 px-6 py-3 bg-gradient-to-r from-breathing-green to-stone",
               "text-white rounded-lg transition-all duration-300 text-sm font-medium",
               "hover:from-breathing-blue hover:to-stone-dark hover:scale-105 hover:shadow-breathing-green",
-              "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100",
               "animate-breathe-subtle",
               {
-                "order-1 sm:order-2": variant === "bubble",
+                "opacity-100": context.trim() || !context.trim(),
               }
             )}
           >
-            {context.trim()
-              ? "Create my experience"
-              : "Share your context first"}
+            {context.trim() ? "Create my experience" : "Continue"}
           </button>
         </div>
-
-        {/* Sacred Character Hint */}
-        {context.length > 0 && (
-          <div className="text-center animate-breathe-in">
-            <p className="text-xs text-slate-500">
-              {context.length} characters • The more context, the more
-              personalized the experience
-            </p>
-          </div>
-        )}
-
-        {/* Context Quality Indicator */}
-        {context.length > 10 && (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-xs text-slate-500">
-              <span>Context quality:</span>
-              <span
-                className={cn({
-                  "text-slate-400": context.length < 50,
-                  "text-breathing-gold":
-                    context.length >= 50 && context.length < 150,
-                  "text-breathing-green": context.length >= 150,
-                })}
-              >
-                {context.length < 50
-                  ? "Basic"
-                  : context.length < 150
-                    ? "Good"
-                    : "Excellent"}
-              </span>
-            </div>
-            <div className="w-full bg-slate-200 rounded-full h-1">
-              <div
-                className={cn("h-1 rounded-full transition-all duration-300", {
-                  "bg-slate-400": context.length < 50,
-                  "bg-breathing-gold":
-                    context.length >= 50 && context.length < 150,
-                  "bg-breathing-green": context.length >= 150,
-                })}
-                style={{
-                  width: `${Math.min(100, (context.length / 200) * 100)}%`,
-                }}
-              />
-            </div>
-          </div>
-        )}
       </form>
 
       {/* Sacred Explanation */}
-      <div className="mt-8 text-center">
-        <div
-          className={cn("mx-auto space-y-2", {
-            "max-w-md": variant !== "bubble",
-            "max-w-sm": variant === "bubble",
-          })}
-        >
+      <div className="mt-6 text-center">
+        <div className="mx-auto space-y-2 max-w-sm">
           <p className="text-xs text-slate-500 leading-relaxed">
-            This helps the experience recognize you specifically. Or continue
-            without— the universal journey is equally profound.
+            This helps the experience recognize you. Or continue without—the
+            universal journey is equally profound.
           </p>
 
           {/* Sacred breathing dots */}
