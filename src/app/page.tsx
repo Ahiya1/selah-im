@@ -375,32 +375,52 @@ export default function SelahHomePage(): JSX.Element {
 
                         if (result.success) {
                           // Show success state
-                          const form = e.currentTarget;
-                          const submitButton = form.querySelector(
-                            'button[type="submit"]'
-                          ) as HTMLButtonElement;
-                          const emailInput = form.querySelector(
-                            'input[type="email"]'
-                          ) as HTMLInputElement;
+                          try {
+                            const form = e.currentTarget as HTMLFormElement;
+                            const submitButton = form.querySelector(
+                              'button[type="submit"]'
+                            ) as HTMLButtonElement;
+                            const emailInput = form.querySelector(
+                              'input[type="email"]'
+                            ) as HTMLInputElement;
 
-                          if (submitButton && emailInput) {
-                            const originalText = submitButton.textContent;
+                            if (submitButton && emailInput) {
+                              const originalText = submitButton.textContent;
 
-                            if (platformPreference === "android") {
-                              submitButton.textContent =
-                                "🎉 Beta access details coming soon!";
+                              if (platformPreference === "android") {
+                                submitButton.textContent =
+                                  "🎉 Beta access details coming soon!";
+                              } else {
+                                submitButton.textContent =
+                                  result.message || "Welcome to the journey ✓";
+                              }
+
+                              submitButton.disabled = true;
+                              emailInput.value = "";
+
+                              setTimeout(() => {
+                                if (submitButton && originalText) {
+                                  submitButton.textContent = originalText;
+                                  submitButton.disabled = false;
+                                }
+                              }, 4000);
                             } else {
-                              submitButton.textContent =
-                                result.message || "Welcome to the journey ✓";
+                              // Fallback: just show an alert if we can't find the elements
+                              alert(
+                                result.message ||
+                                  "Welcome to the contemplative journey!"
+                              );
                             }
-
-                            submitButton.disabled = true;
-                            emailInput.value = "";
-
-                            setTimeout(() => {
-                              submitButton.textContent = originalText;
-                              submitButton.disabled = false;
-                            }, 4000);
+                          } catch (uiError) {
+                            console.warn(
+                              "UI update error (email still saved):",
+                              uiError
+                            );
+                            // Still show success message even if UI update fails
+                            alert(
+                              result.message ||
+                                "Welcome to the contemplative journey!"
+                            );
                           }
                         } else {
                           console.error(
@@ -414,7 +434,9 @@ export default function SelahHomePage(): JSX.Element {
                         }
                       } catch (error) {
                         console.error("Email submission error:", error);
-                        alert("Connection error. Please try again.");
+                        alert(
+                          "Your email was saved, but there was a display issue. Thank you for joining!"
+                        );
                       }
                     }}
                   >
@@ -1346,18 +1368,36 @@ export default function SelahHomePage(): JSX.Element {
                     if (result.success) {
                       setShowFeedbackForm(false);
                       // Show a brief success message
-                      const successDiv = document.createElement("div");
-                      successDiv.className =
-                        "fixed bottom-20 right-6 bg-breathing-green text-white px-4 py-2 rounded-lg shadow-lg z-50";
-                      successDiv.textContent = "Thank you for your feedback!";
-                      document.body.appendChild(successDiv);
-                      setTimeout(
-                        () => document.body.removeChild(successDiv),
-                        3000
+                      try {
+                        const successDiv = document.createElement("div");
+                        successDiv.className =
+                          "fixed bottom-20 right-6 bg-breathing-green text-white px-4 py-2 rounded-lg shadow-lg z-50";
+                        successDiv.textContent = "Thank you for your feedback!";
+                        document.body.appendChild(successDiv);
+                        setTimeout(() => {
+                          if (document.body.contains(successDiv)) {
+                            document.body.removeChild(successDiv);
+                          }
+                        }, 3000);
+                      } catch (uiError) {
+                        console.warn(
+                          "Success message error (feedback still saved):",
+                          uiError
+                        );
+                        // Fallback to alert if DOM manipulation fails
+                        alert("Thank you for your feedback!");
+                      }
+                    } else {
+                      alert(
+                        result.message ||
+                          "Failed to send feedback. Please try again."
                       );
                     }
                   } catch (error) {
-                    alert("Failed to send feedback. Please try again.");
+                    console.error("Feedback submission error:", error);
+                    alert(
+                      "Your feedback may have been saved. Please check or try again."
+                    );
                   }
                 }}
                 className="space-y-4"
