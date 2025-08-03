@@ -1,6 +1,6 @@
 // src/app/admin/page.tsx - SELAH Enhanced Admin Dashboard
 // Technology that breathes with you
-// Real data insights and management
+// Real data insights with platform preference analytics
 
 "use client";
 
@@ -19,6 +19,18 @@ interface FeedbackItem {
   status: "new" | "read" | "responded";
 }
 
+interface PlatformStats {
+  android: number;
+  ios: number;
+  unspecified: number;
+}
+
+interface ConversionMetrics {
+  totalInteractions: number;
+  avgSessionTime: number;
+  avgScrollDepth: number;
+}
+
 interface DashboardData {
   emails: EmailSubmission[];
   feedback: FeedbackItem[];
@@ -29,6 +41,10 @@ interface DashboardData {
     emailsToday: number;
     feedbackToday: number;
     topSources: Array<{ source: string; count: number }>;
+    platformStats: PlatformStats;
+    sourceStats: Record<string, number>;
+    locationStats: Record<string, number>;
+    conversionMetrics: ConversionMetrics;
   };
 }
 
@@ -39,7 +55,7 @@ export default function AdminDashboard(): JSX.Element {
   const [loading, setLoading] = useState<boolean>(false);
   const [data, setData] = useState<DashboardData | null>(null);
   const [activeTab, setActiveTab] = useState<
-    "overview" | "emails" | "feedback"
+    "overview" | "emails" | "feedback" | "analytics"
   >("overview");
 
   // Authentication
@@ -77,7 +93,7 @@ export default function AdminDashboard(): JSX.Element {
       const token = localStorage.getItem("selah-admin-token");
       if (!token) return;
 
-      // Load emails
+      // Load emails with enhanced analytics
       const emailsResponse = await fetch("/api/emails", {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -92,6 +108,7 @@ export default function AdminDashboard(): JSX.Element {
       if (emailsResult.success && feedbackResult.success) {
         const emails = emailsResult.data.emails || [];
         const feedback = feedbackResult.data.feedback || [];
+        const analytics = emailsResult.data.analytics || {};
 
         // Calculate stats
         const today = new Date().toISOString().split("T")[0];
@@ -105,11 +122,14 @@ export default function AdminDashboard(): JSX.Element {
           (f: FeedbackItem) => f.status === "new"
         ).length;
 
-        // Top sources
-        const sourceCount: Record<string, number> = {};
-        emails.forEach((e: EmailSubmission) => {
-          sourceCount[e.source] = (sourceCount[e.source] || 0) + 1;
-        });
+        // Top sources (fallback if analytics not available)
+        const sourceCount: Record<string, number> = analytics.sourceStats || {};
+        if (Object.keys(sourceCount).length === 0) {
+          emails.forEach((e: EmailSubmission) => {
+            sourceCount[e.source] = (sourceCount[e.source] || 0) + 1;
+          });
+        }
+
         const topSources = Object.entries(sourceCount)
           .map(([source, count]) => ({ source, count }))
           .sort((a, b) => b.count - a.count)
@@ -125,6 +145,18 @@ export default function AdminDashboard(): JSX.Element {
             emailsToday,
             feedbackToday,
             topSources,
+            platformStats: analytics.platformStats || {
+              android: 0,
+              ios: 0,
+              unspecified: emails.length,
+            },
+            sourceStats: analytics.sourceStats || sourceCount,
+            locationStats: analytics.locationStats || {},
+            conversionMetrics: analytics.conversionMetrics || {
+              totalInteractions: 0,
+              avgSessionTime: 0,
+              avgScrollDepth: 0,
+            },
           },
         });
       }
@@ -252,6 +284,7 @@ export default function AdminDashboard(): JSX.Element {
             { id: "overview", label: "Overview", icon: "📊" },
             { id: "emails", label: "Email Signups", icon: "📧" },
             { id: "feedback", label: "Feedback", icon: "💬" },
+            { id: "analytics", label: "Platform Analytics", icon: "📱" },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -327,15 +360,15 @@ export default function AdminDashboard(): JSX.Element {
                   <div className="card-stone p-6">
                     <div className="flex items-center space-x-3">
                       <div className="w-12 h-12 bg-breathing-gold/20 rounded-lg flex items-center justify-center">
-                        <span className="text-2xl">🔔</span>
+                        <span className="text-2xl">🤖</span>
                       </div>
                       <div>
                         <p className="text-2xl font-semibold text-stone">
-                          {data.stats.newFeedback}
+                          {data.stats.platformStats.android}
                         </p>
-                        <p className="text-slate-600 text-sm">New Messages</p>
+                        <p className="text-slate-600 text-sm">Android Users</p>
                         <p className="text-breathing-gold text-xs">
-                          Need attention
+                          Beta Ready
                         </p>
                       </div>
                     </div>
@@ -344,18 +377,122 @@ export default function AdminDashboard(): JSX.Element {
                   <div className="card-stone p-6">
                     <div className="flex items-center space-x-3">
                       <div className="w-12 h-12 bg-breathing-pink/20 rounded-lg flex items-center justify-center">
-                        <span className="text-2xl">📈</span>
+                        <span className="text-2xl">📱</span>
                       </div>
                       <div>
                         <p className="text-2xl font-semibold text-stone">
-                          {data.stats.emailsToday + data.stats.feedbackToday}
+                          {data.stats.platformStats.ios}
                         </p>
-                        <p className="text-slate-600 text-sm">
-                          Today's Activity
-                        </p>
+                        <p className="text-slate-600 text-sm">iPhone Users</p>
                         <p className="text-breathing-pink text-xs">
-                          All interactions
+                          Waiting List
                         </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Platform Breakdown */}
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="card-stone p-6">
+                    <h3 className="text-lg font-semibold text-stone mb-4">
+                      Platform Preferences
+                    </h3>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <span className="text-2xl">🤖</span>
+                          <span className="text-slate-700">Android</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-stone font-medium">
+                            {data.stats.platformStats.android}
+                          </span>
+                          <span className="text-xs bg-breathing-green text-white px-2 py-1 rounded">
+                            {Math.round(
+                              (data.stats.platformStats.android /
+                                data.stats.totalEmails) *
+                                100
+                            )}
+                            %
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <span className="text-2xl">📱</span>
+                          <span className="text-slate-700">iPhone</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-stone font-medium">
+                            {data.stats.platformStats.ios}
+                          </span>
+                          <span className="text-xs bg-breathing-blue text-white px-2 py-1 rounded">
+                            {Math.round(
+                              (data.stats.platformStats.ios /
+                                data.stats.totalEmails) *
+                                100
+                            )}
+                            %
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <span className="text-2xl">❓</span>
+                          <span className="text-slate-700">Unspecified</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-stone font-medium">
+                            {data.stats.platformStats.unspecified}
+                          </span>
+                          <span className="text-xs bg-slate-400 text-white px-2 py-1 rounded">
+                            {Math.round(
+                              (data.stats.platformStats.unspecified /
+                                data.stats.totalEmails) *
+                                100
+                            )}
+                            %
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="card-stone p-6">
+                    <h3 className="text-lg font-semibold text-stone mb-4">
+                      Engagement Metrics
+                    </h3>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-700">Avg Session Time</span>
+                        <span className="text-stone font-medium">
+                          {Math.round(
+                            data.stats.conversionMetrics.avgSessionTime
+                          )}
+                          s
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-700">Avg Scroll Depth</span>
+                        <span className="text-stone font-medium">
+                          {Math.round(
+                            data.stats.conversionMetrics.avgScrollDepth
+                          )}
+                          %
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-700">
+                          Total Interactions
+                        </span>
+                        <span className="text-stone font-medium">
+                          {data.stats.conversionMetrics.totalInteractions}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -387,58 +524,178 @@ export default function AdminDashboard(): JSX.Element {
                     ))}
                   </div>
                 </div>
+              </div>
+            )}
 
-                {/* Recent Activity */}
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="card-stone p-6">
-                    <h3 className="text-lg font-semibold text-stone mb-4">
-                      Recent Emails
-                    </h3>
-                    <div className="space-y-3">
-                      {data.emails.slice(0, 5).map((email) => (
-                        <div
-                          key={email.id}
-                          className="flex items-center justify-between text-sm"
-                        >
-                          <span className="text-slate-700 truncate">
-                            {email.email}
-                          </span>
-                          <span className="text-slate-500">
-                            {new Date(email.timestamp).toLocaleDateString()}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+            {/* Analytics Tab */}
+            {activeTab === "analytics" && (
+              <div className="space-y-8">
+                <div className="card-stone p-8">
+                  <h2 className="text-xl font-semibold text-stone mb-6">
+                    Platform Analytics Deep Dive
+                  </h2>
 
-                  <div className="card-stone p-6">
-                    <h3 className="text-lg font-semibold text-stone mb-4">
-                      Recent Feedback
+                  {/* Platform Distribution Visual */}
+                  <div className="mb-8">
+                    <h3 className="text-lg font-medium text-stone mb-4">
+                      Platform Distribution
                     </h3>
-                    <div className="space-y-3">
-                      {data.feedback.slice(0, 5).map((feedback) => (
-                        <div key={feedback.id} className="text-sm">
-                          <div className="flex items-center justify-between mb-1">
+                    <div className="space-y-4">
+                      {/* Android */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-lg">🤖</span>
                             <span className="font-medium text-slate-700">
-                              {feedback.name || feedback.email || "Anonymous"}
-                            </span>
-                            <span
-                              className={`px-2 py-1 rounded-full text-xs ${
-                                feedback.status === "new"
-                                  ? "bg-breathing-green/20 text-breathing-green"
-                                  : "bg-slate-200 text-slate-600"
-                              }`}
-                            >
-                              {feedback.status}
+                              Android Beta Users
                             </span>
                           </div>
-                          <p className="text-slate-600 truncate">
-                            {feedback.message}
-                          </p>
+                          <span className="text-sm text-slate-600">
+                            {data.stats.platformStats.android} users (
+                            {Math.round(
+                              (data.stats.platformStats.android /
+                                data.stats.totalEmails) *
+                                100
+                            )}
+                            %)
+                          </span>
                         </div>
-                      ))}
+                        <div className="w-full bg-slate-200 rounded-full h-3">
+                          <div
+                            className="bg-breathing-green h-3 rounded-full transition-all duration-500"
+                            style={{
+                              width: `${(data.stats.platformStats.android / data.stats.totalEmails) * 100}%`,
+                            }}
+                          ></div>
+                        </div>
+                      </div>
+
+                      {/* iOS */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-lg">📱</span>
+                            <span className="font-medium text-slate-700">
+                              iPhone Waitlist
+                            </span>
+                          </div>
+                          <span className="text-sm text-slate-600">
+                            {data.stats.platformStats.ios} users (
+                            {Math.round(
+                              (data.stats.platformStats.ios /
+                                data.stats.totalEmails) *
+                                100
+                            )}
+                            %)
+                          </span>
+                        </div>
+                        <div className="w-full bg-slate-200 rounded-full h-3">
+                          <div
+                            className="bg-breathing-blue h-3 rounded-full transition-all duration-500"
+                            style={{
+                              width: `${(data.stats.platformStats.ios / data.stats.totalEmails) * 100}%`,
+                            }}
+                          ></div>
+                        </div>
+                      </div>
+
+                      {/* Unspecified */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-lg">❓</span>
+                            <span className="font-medium text-slate-700">
+                              Platform Not Selected
+                            </span>
+                          </div>
+                          <span className="text-sm text-slate-600">
+                            {data.stats.platformStats.unspecified} users (
+                            {Math.round(
+                              (data.stats.platformStats.unspecified /
+                                data.stats.totalEmails) *
+                                100
+                            )}
+                            %)
+                          </span>
+                        </div>
+                        <div className="w-full bg-slate-200 rounded-full h-3">
+                          <div
+                            className="bg-slate-400 h-3 rounded-full transition-all duration-500"
+                            style={{
+                              width: `${(data.stats.platformStats.unspecified / data.stats.totalEmails) * 100}%`,
+                            }}
+                          ></div>
+                        </div>
+                      </div>
                     </div>
                   </div>
+
+                  {/* Key Insights */}
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="bg-breathing-green/10 border-l-4 border-breathing-green p-4 rounded-r-lg">
+                      <h4 className="font-semibold text-breathing-green mb-2">
+                        Android Beta Ready
+                      </h4>
+                      <p className="text-sm text-slate-700">
+                        {data.stats.platformStats.android} users are ready for
+                        immediate beta access. This represents{" "}
+                        {Math.round(
+                          (data.stats.platformStats.android /
+                            data.stats.totalEmails) *
+                            100
+                        )}
+                        % of your total signups.
+                      </p>
+                    </div>
+
+                    <div className="bg-breathing-blue/10 border-l-4 border-breathing-blue p-4 rounded-r-lg">
+                      <h4 className="font-semibold text-breathing-blue mb-2">
+                        iPhone Demand
+                      </h4>
+                      <p className="text-sm text-slate-700">
+                        {data.stats.platformStats.ios} users are waiting for the
+                        iPhone version. Strong demand indicator for iOS
+                        development priority.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Recommendations */}
+                  {data.stats.platformStats.android > 0 && (
+                    <div className="mt-6 bg-stone/5 border border-stone/20 rounded-lg p-6">
+                      <h4 className="font-semibold text-stone mb-3">
+                        📋 Action Items
+                      </h4>
+                      <ul className="space-y-2 text-sm text-slate-700">
+                        <li className="flex items-start space-x-2">
+                          <span className="text-breathing-green">•</span>
+                          <span>
+                            Send beta access instructions to{" "}
+                            {data.stats.platformStats.android} Android users
+                          </span>
+                        </li>
+                        {data.stats.platformStats.ios > 0 && (
+                          <li className="flex items-start space-x-2">
+                            <span className="text-breathing-blue">•</span>
+                            <span>
+                              Keep {data.stats.platformStats.ios} iPhone users
+                              engaged with development updates
+                            </span>
+                          </li>
+                        )}
+                        {data.stats.platformStats.unspecified > 0 && (
+                          <li className="flex items-start space-x-2">
+                            <span className="text-slate-400">•</span>
+                            <span>
+                              Follow up with{" "}
+                              {data.stats.platformStats.unspecified} users to
+                              collect platform preference
+                            </span>
+                          </li>
+                        )}
+                      </ul>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -463,48 +720,57 @@ export default function AdminDashboard(): JSX.Element {
                           Email
                         </th>
                         <th className="text-left py-3 px-4 font-medium text-slate-700">
+                          Platform
+                        </th>
+                        <th className="text-left py-3 px-4 font-medium text-slate-700">
                           Source
                         </th>
                         <th className="text-left py-3 px-4 font-medium text-slate-700">
                           Date
                         </th>
-                        <th className="text-left py-3 px-4 font-medium text-slate-700">
-                          Info
-                        </th>
                       </tr>
                     </thead>
                     <tbody>
-                      {data.emails.map((email) => (
-                        <tr
-                          key={email.id}
-                          className="border-b border-slate-100 hover:bg-slate-50"
-                        >
-                          <td className="py-3 px-4 text-slate-700">
-                            {email.email}
-                          </td>
-                          <td className="py-3 px-4">
-                            <span className="bg-stone/10 text-stone px-2 py-1 rounded text-xs capitalize">
-                              {email.source.replace("-", " ")}
-                            </span>
-                          </td>
-                          <td className="py-3 px-4 text-slate-600 text-sm">
-                            {new Date(email.timestamp).toLocaleString()}
-                          </td>
-                          <td className="py-3 px-4 text-slate-600 text-sm">
-                            {email.engagement?.userAgent && (
-                              <div
-                                className="max-w-32 truncate"
-                                title={email.engagement.userAgent}
-                              >
-                                {email.engagement.userAgent.includes("Mobile")
-                                  ? "📱"
-                                  : "💻"}{" "}
-                                Device
-                              </div>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
+                      {data.emails.map((email) => {
+                        const platform = email.engagement?.platformPreference;
+                        return (
+                          <tr
+                            key={email.id}
+                            className="border-b border-slate-100 hover:bg-slate-50"
+                          >
+                            <td className="py-3 px-4 text-slate-700">
+                              {email.email}
+                            </td>
+                            <td className="py-3 px-4">
+                              {platform === "android" && (
+                                <span className="bg-breathing-green/20 text-breathing-green px-2 py-1 rounded text-xs flex items-center space-x-1">
+                                  <span>🤖</span>
+                                  <span>Android</span>
+                                </span>
+                              )}
+                              {platform === "ios" && (
+                                <span className="bg-breathing-blue/20 text-breathing-blue px-2 py-1 rounded text-xs flex items-center space-x-1">
+                                  <span>📱</span>
+                                  <span>iPhone</span>
+                                </span>
+                              )}
+                              {!platform && (
+                                <span className="bg-slate-200 text-slate-600 px-2 py-1 rounded text-xs">
+                                  Not specified
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-3 px-4">
+                              <span className="bg-stone/10 text-stone px-2 py-1 rounded text-xs capitalize">
+                                {email.source.replace("-", " ")}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4 text-slate-600 text-sm">
+                              {new Date(email.timestamp).toLocaleString()}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>

@@ -1,6 +1,6 @@
 // src/lib/types.ts - SELAH TypeScript Definitions
 // Technology that breathes with you
-// Type-safe contemplative data structures
+// Enhanced type-safe contemplative data structures with platform tracking
 
 // ============================================================================
 // EMAIL COLLECTION TYPES
@@ -17,6 +17,7 @@ export interface EmailSubmission {
 
 export type EmailSource =
   | "landing-page"
+  | "hero-section"
   | "orb-interaction"
   | "contract-section"
   | "chambers-demo";
@@ -25,6 +26,26 @@ export interface EmailValidationResult {
   isValid: boolean;
   error?: string;
   suggestions?: string[];
+}
+
+// ============================================================================
+// PLATFORM PREFERENCE TYPES
+// ============================================================================
+
+export type PlatformPreference = "android" | "ios" | null;
+
+export interface PlatformContext {
+  platformPreference: PlatformPreference;
+  location: "hero" | "bottom" | "unknown";
+  sessionTime: number;
+  breathInteractions: number;
+  scrollDepth: number;
+}
+
+export interface PlatformStats {
+  android: number;
+  ios: number;
+  unspecified: number;
 }
 
 // ============================================================================
@@ -44,6 +65,33 @@ export interface EngagementData {
     height: number;
   };
   timestamp: string;
+  // Enhanced tracking properties
+  platformPreference?: PlatformPreference;
+  location?: string;
+  sessionMetrics?: SessionMetrics;
+  sourceContext?: SourceContext;
+  updateHistory?: UpdateHistoryEntry[];
+}
+
+export interface SessionMetrics {
+  timeSpent: number;
+  breathInteractions: number;
+  scrollDepth: number;
+}
+
+export interface SourceContext {
+  fromHero?: boolean;
+  fromOrb?: boolean;
+  fromChambers?: boolean;
+  fromContract?: boolean;
+}
+
+export interface UpdateHistoryEntry {
+  timestamp: string;
+  source: EmailSource;
+  platformPreference?: PlatformPreference;
+  location?: string;
+  action: string;
 }
 
 export interface OrbEngagement {
@@ -100,6 +148,8 @@ export interface EmailFormProps {
   placeholder?: string;
   className?: string;
   disabled?: boolean;
+  platformPreference?: PlatformPreference;
+  onPlatformChange?: (platform: PlatformPreference) => void;
 }
 
 export interface EmailFormState {
@@ -108,6 +158,7 @@ export interface EmailFormState {
   isSubmitted: boolean;
   error: string | null;
   validationResult: EmailValidationResult | null;
+  platformPreference: PlatformPreference;
 }
 
 // ============================================================================
@@ -151,6 +202,21 @@ export interface AnalyticsSummary {
   }>;
   dailyStats: DailyStats[];
   engagementTrends: EngagementTrend[];
+  // Enhanced analytics
+  platformStats: PlatformStats;
+  sourceStats: Record<string, number>;
+  locationStats: Record<string, number>;
+  conversionMetrics: ConversionMetrics;
+}
+
+export interface ConversionMetrics {
+  totalInteractions: number;
+  avgSessionTime: number;
+  avgScrollDepth: number;
+  platformConversionRates?: {
+    android: number;
+    ios: number;
+  };
 }
 
 export interface DailyStats {
@@ -159,6 +225,7 @@ export interface DailyStats {
   sessions: number;
   avgTimeSpent: number;
   orbInteractions: number;
+  platformBreakdown: PlatformStats;
 }
 
 export interface EngagementTrend {
@@ -166,6 +233,7 @@ export interface EngagementTrend {
   metric: string;
   value: number;
   change: number; // percentage change from previous period
+  platformData?: Record<string, number>;
 }
 
 export interface ExportData {
@@ -258,6 +326,7 @@ export interface UserPreferences {
   analytics: boolean;
   orbSensitivity: "low" | "medium" | "high";
   breathingSpeed: "slow" | "normal" | "fast";
+  platformPreference: PlatformPreference;
 }
 
 // ============================================================================
@@ -280,6 +349,26 @@ export interface EmailSubmissionResponse extends ApiResponse<EmailSubmission> {
 export interface AnalyticsResponse extends ApiResponse<AnalyticsSummary> {
   cached?: boolean;
   cacheExpiry?: string;
+}
+
+export interface EnhancedEmailResponse extends ApiResponse {
+  data?: {
+    emails: EmailSubmission[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+      hasNext: boolean;
+      hasPrev: boolean;
+    };
+    analytics: {
+      platformStats: PlatformStats;
+      sourceStats: Record<string, number>;
+      locationStats: Record<string, number>;
+      conversionMetrics: ConversionMetrics;
+    };
+  };
 }
 
 // ============================================================================
@@ -318,6 +407,15 @@ export interface FormState<T extends Record<string, any>> {
   isValid: boolean;
   isDirty: boolean;
   submitCount: number;
+}
+
+export interface PlatformFormState
+  extends FormState<{
+    email: string;
+    platformPreference: PlatformPreference;
+  }> {
+  showPlatformSelection: boolean;
+  platformMessage: string | null;
 }
 
 // ============================================================================
@@ -388,6 +486,12 @@ export interface ContainerComponentProps extends BaseComponentProps {
   size?: "small" | "medium" | "large";
 }
 
+export interface PlatformAwareComponentProps extends BaseComponentProps {
+  platformPreference?: PlatformPreference;
+  onPlatformChange?: (platform: PlatformPreference) => void;
+  showPlatformBadges?: boolean;
+}
+
 // ============================================================================
 // CONSTANTS TYPES
 // ============================================================================
@@ -397,10 +501,13 @@ export type BreathingState = (typeof BREATHING_STATES)[number];
 
 export const EMAIL_SOURCES = [
   "landing-page",
+  "hero-section",
   "orb-interaction",
   "contract-section",
   "chambers-demo",
 ] as const;
+
+export const PLATFORM_PREFERENCES = ["android", "ios"] as const;
 
 export const CHAMBER_IDS = [
   "meditation",
@@ -411,3 +518,63 @@ export const CHAMBER_IDS = [
 
 export const ADMIN_ROLES = ["admin", "viewer"] as const;
 export type AdminRole = (typeof ADMIN_ROLES)[number];
+
+// ============================================================================
+// BETA TESTING TYPES
+// ============================================================================
+
+export interface BetaTester {
+  id: string;
+  email: string;
+  platform: "android" | "ios";
+  inviteStatus: "pending" | "sent" | "accepted" | "declined";
+  invitedAt: string;
+  acceptedAt?: string;
+  testingNotes?: string;
+  deviceInfo?: {
+    model: string;
+    osVersion: string;
+    appVersion: string;
+  };
+}
+
+export interface BetaTestingMetrics {
+  totalTesters: number;
+  androidTesters: number;
+  iosWaitlist: number;
+  activeTesters: number;
+  feedbackReceived: number;
+  averageRating?: number;
+}
+
+// ============================================================================
+// FEATURE FLAGS TYPES
+// ============================================================================
+
+export interface FeatureFlags {
+  androidBetaEnabled: boolean;
+  iosBetaEnabled: boolean;
+  platformSelectionEnabled: boolean;
+  enhancedAnalytics: boolean;
+  feedbackCollection: boolean;
+}
+
+// ============================================================================
+// NOTIFICATION TYPES
+// ============================================================================
+
+export interface NotificationPreferences {
+  betaUpdates: boolean;
+  featureAnnouncements: boolean;
+  communityHighlights: boolean;
+  platformSpecific: boolean;
+}
+
+export interface NotificationTemplate {
+  id: string;
+  name: string;
+  subject: string;
+  content: string;
+  platform?: PlatformPreference;
+  variables: string[];
+}

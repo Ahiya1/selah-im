@@ -4,8 +4,8 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { generateSessionMetadata, formatDuration } from "@/lib/utils";
-import type { EngagementData, OrbEngagement } from "@/lib/types";
+import { generateSessionMetadata, formatDuration } from "../lib/utils";
+import type { EngagementData, OrbEngagement } from "../lib/types";
 
 export default function SelahHomePage(): JSX.Element {
   // Session tracking
@@ -14,6 +14,7 @@ export default function SelahHomePage(): JSX.Element {
   const [currentChamber, setCurrentChamber] = useState<number>(0);
   const [isVisible, setIsVisible] = useState<boolean>(true);
   const [showFeedbackForm, setShowFeedbackForm] = useState<boolean>(false);
+  const [platformPreference, setPlatformPreference] = useState<'android' | 'ios' | null>(null);
   const sessionStartTime = useRef<number>(Date.now());
   const maxScrollRef = useRef<number>(0);
   const timeTrackerRef = useRef<NodeJS.Timeout | null>(null);
@@ -139,69 +140,6 @@ export default function SelahHomePage(): JSX.Element {
     );
   }, []);
 
-  // Handle form submission
-  const handleEmailSubmit = useCallback(
-    async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
-      event.preventDefault();
-      const formData = new FormData(event.currentTarget);
-      const email = formData.get("email") as string;
-
-      if (!email) return;
-
-      try {
-        const response = await fetch("/api/emails", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email: email.trim(),
-            source: "landing-page",
-            context: {
-              sessionTime: sessionData?.timeSpent || 0,
-              breathInteractions: sessionData?.breathInteractions || 0,
-              scrollDepth: sessionData?.maxScroll || 0,
-            },
-          }),
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-          // Show success state
-          const form = event.currentTarget;
-          const submitButton = form.querySelector(
-            'button[type="submit"]'
-          ) as HTMLButtonElement;
-          const emailInput = form.querySelector(
-            'input[type="email"]'
-          ) as HTMLInputElement;
-
-          if (submitButton && emailInput) {
-            const originalText = submitButton.textContent;
-            submitButton.textContent =
-              result.message || "Welcome to the journey ✓";
-            submitButton.disabled = true;
-            emailInput.value = "";
-
-            setTimeout(() => {
-              submitButton.textContent = originalText;
-              submitButton.disabled = false;
-            }, 3000);
-          }
-        } else {
-          // Show error
-          console.error("Email submission failed:", result.message);
-          alert(result.message || "Failed to submit email. Please try again.");
-        }
-      } catch (error) {
-        console.error("Email submission error:", error);
-        alert("Connection error. Please try again.");
-      }
-    },
-    [sessionData]
-  );
-
   if (!isLoaded) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-emerald-50">
@@ -288,19 +226,13 @@ export default function SelahHomePage(): JSX.Element {
             >
               Contact
             </a>
-            <a
-              href="#join"
-              className="text-slate-600 hover:text-stone transition-colors"
-            >
-              Join
-            </a>
           </div>
         </nav>
       </header>
 
       {/* Main Content */}
       <main className="pt-24">
-        {/* Hero Section - Chamber Preview */}
+        {/* Hero Section - Updated with Email Collection */}
         <section className="min-h-screen flex items-center justify-center relative overflow-hidden">
           {/* Animated background */}
           <div className="absolute inset-0 bg-gradient-to-br from-slate-50 to-emerald-50">
@@ -318,7 +250,7 @@ export default function SelahHomePage(): JSX.Element {
 
           <div className="container-contemplative max-w-6xl relative z-10">
             <div className="grid lg:grid-cols-2 gap-12 items-center">
-              {/* Left: Content */}
+              {/* Left: Content + Email Collection */}
               <div className="text-center lg:text-left space-y-8">
                 <div className="space-y-4">
                   <h1 className="text-6xl md:text-8xl font-bold text-stone animate-breathe tracking-wider">
@@ -343,12 +275,167 @@ export default function SelahHomePage(): JSX.Element {
                   </div>
                 </div>
 
-                {/* Coming Soon Badge */}
+                {/* Android Beta Badge */}
                 <div className="inline-flex items-center space-x-4 bg-gradient-to-r from-breathing-green/20 to-breathing-blue/20 backdrop-blur-sm border border-breathing-green/30 rounded-full px-6 py-3">
                   <div className="w-3 h-3 bg-breathing-green rounded-full animate-pulse"></div>
                   <span className="text-stone font-medium">
-                    Coming soon to iOS & Android
+                    🤖 Beta now available for Android users
                   </span>
+                </div>
+
+                {/* Email Collection Form - Moved to Top */}
+                <div className="bg-white/80 backdrop-blur-md border border-white/30 rounded-xl p-6 space-y-4">
+                  <div className="text-center space-y-2">
+                    <h3 className="text-lg font-semibold text-stone">
+                      Begin Your Recognition
+                    </h3>
+                    <p className="text-slate-600 text-sm">
+                      Join the contemplative journey. Get early access and updates.
+                    </p>
+                  </div>
+
+                  {/* Platform Selection */}
+                  <div className="space-y-3">
+                    <p className="text-sm font-medium text-slate-700">
+                      Which platform do you use?
+                    </p>
+                    <div className="flex space-x-3">
+                      <button
+                        type="button"
+                        onClick={() => setPlatformPreference('android')}
+                        className={`flex-1 flex items-center justify-center space-x-2 px-4 py-3 rounded-lg border transition-all ${
+                          platformPreference === 'android'
+                            ? 'bg-breathing-green/20 border-breathing-green text-breathing-green'
+                            : 'bg-white/50 border-slate-200 text-slate-600 hover:bg-white/70'
+                        }`}
+                      >
+                        <span>🤖</span>
+                        <span className="font-medium">Android</span>
+                        {platformPreference === 'android' && (
+                          <span className="text-xs bg-breathing-green/30 px-2 py-1 rounded">
+                            Beta Ready!
+                          </span>
+                        )}
+                      </button>
+                      
+                      <button
+                        type="button"
+                        onClick={() => setPlatformPreference('ios')}
+                        className={`flex-1 flex items-center justify-center space-x-2 px-4 py-3 rounded-lg border transition-all ${
+                          platformPreference === 'ios'
+                            ? 'bg-breathing-blue/20 border-breathing-blue text-breathing-blue'
+                            : 'bg-white/50 border-slate-200 text-slate-600 hover:bg-white/70'
+                        }`}
+                      >
+                        <span>📱</span>
+                        <span className="font-medium">iPhone</span>
+                        {platformPreference === 'ios' && (
+                          <span className="text-xs bg-breathing-blue/30 px-2 py-1 rounded">
+                            Coming Soon
+                          </span>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Enhanced Email Form */}
+                  <form
+                    className="space-y-4"
+                    onSubmit={async (e) => {
+                      e.preventDefault();
+                      const formData = new FormData(e.currentTarget);
+                      const email = formData.get("email") as string;
+
+                      if (!email) return;
+
+                      try {
+                        const response = await fetch("/api/emails", {
+                          method: "POST",
+                          headers: {
+                            "Content-Type": "application/json",
+                          },
+                          body: JSON.stringify({
+                            email: email.trim(),
+                            source: "hero-section",
+                            context: {
+                              sessionTime: sessionData?.timeSpent || 0,
+                              breathInteractions: sessionData?.breathInteractions || 0,
+                              scrollDepth: sessionData?.maxScroll || 0,
+                              platformPreference: platformPreference,
+                              location: 'hero'
+                            },
+                          }),
+                        });
+
+                        const result = await response.json();
+
+                        if (result.success) {
+                          // Show success state
+                          const form = e.currentTarget;
+                          const submitButton = form.querySelector(
+                            'button[type="submit"]'
+                          ) as HTMLButtonElement;
+                          const emailInput = form.querySelector(
+                            'input[type="email"]'
+                          ) as HTMLInputElement;
+
+                          if (submitButton && emailInput) {
+                            const originalText = submitButton.textContent;
+                            
+                            if (platformPreference === 'android') {
+                              submitButton.textContent = "🎉 Beta access details coming soon!";
+                            } else {
+                              submitButton.textContent = result.message || "Welcome to the journey ✓";
+                            }
+                            
+                            submitButton.disabled = true;
+                            emailInput.value = "";
+
+                            setTimeout(() => {
+                              submitButton.textContent = originalText;
+                              submitButton.disabled = false;
+                            }, 4000);
+                          }
+                        } else {
+                          console.error("Email submission failed:", result.message);
+                          alert(result.message || "Failed to submit email. Please try again.");
+                        }
+                      } catch (error) {
+                        console.error("Email submission error:", error);
+                        alert("Connection error. Please try again.");
+                      }
+                    }}
+                  >
+                    <input
+                      type="email"
+                      name="email"
+                      placeholder="your@email.com"
+                      className="input-contemplative text-center"
+                      required
+                    />
+                    
+                    <button
+                      type="submit"
+                      className="btn-breathing w-full py-3 text-base"
+                    >
+                      {platformPreference === 'android' 
+                        ? '🤖 Get Android Beta Access' 
+                        : platformPreference === 'ios'
+                        ? '📱 Get Notified for iPhone Release'
+                        : 'Join the Contemplative Journey'
+                      }
+                    </button>
+                  </form>
+
+                  <p className="text-xs text-slate-500 text-center">
+                    ✓ No spam, ever. Just contemplative updates.
+                    {platformPreference === 'android' && (
+                      <br />
+                      <span className="text-breathing-green font-medium">
+                        Beta testers get priority access to new chambers.
+                      </span>
+                    )}
+                  </p>
                 </div>
               </div>
 
@@ -817,7 +904,7 @@ export default function SelahHomePage(): JSX.Element {
           </div>
         </section>
 
-        {/* Mobile App Teaser */}
+        {/* Mobile App Showcase - Updated */}
         <section className="section-breathing bg-gradient-to-br from-slate-100 to-emerald-100">
           <div className="container-contemplative">
             <div className="text-center space-y-12">
@@ -826,9 +913,8 @@ export default function SelahHomePage(): JSX.Element {
                   Your Contemplative Companion
                 </h2>
                 <p className="text-xl text-slate-600 max-w-3xl mx-auto">
-                  Soon in your pocket. Four chambers of consciousness
-                  exploration, designed for the moments when you need presence
-                  most.
+                  Now available for Android beta testing. Four chambers of consciousness
+                  exploration, designed for the moments when you need presence most.
                 </p>
               </div>
 
@@ -935,106 +1021,155 @@ export default function SelahHomePage(): JSX.Element {
                 </div>
               </div>
 
-              {/* App Store Badges */}
+              {/* Updated App Store Badges */}
               <div className="space-y-6">
                 <div className="flex justify-center space-x-6">
-                  <div className="bg-slate-200 rounded-lg px-8 py-4 flex items-center space-x-3 opacity-50">
+                  {/* Android - Now Available */}
+                  <div className="bg-gradient-to-r from-breathing-green to-breathing-blue rounded-lg px-8 py-4 flex items-center space-x-3 shadow-lg">
+                    <span className="text-3xl">🤖</span>
+                    <div className="text-left text-white">
+                      <div className="text-xs opacity-90">Beta Available Now</div>
+                      <div className="font-semibold">Android Users</div>
+                      <div className="font-bold">Join Beta Testing</div>
+                    </div>
+                  </div>
+                  
+                  {/* iOS - Coming Soon */}
+                  <div className="bg-slate-200 rounded-lg px-8 py-4 flex items-center space-x-3 opacity-60">
                     <span className="text-3xl">📱</span>
                     <div className="text-left">
                       <div className="text-xs text-slate-500">Coming Soon</div>
-                      <div className="font-semibold text-slate-700">
-                        Download on the
-                      </div>
-                      <div className="font-bold text-slate-700">App Store</div>
-                    </div>
-                  </div>
-                  <div className="bg-slate-200 rounded-lg px-8 py-4 flex items-center space-x-3 opacity-50">
-                    <span className="text-3xl">🤖</span>
-                    <div className="text-left">
-                      <div className="text-xs text-slate-500">Coming Soon</div>
-                      <div className="font-semibold text-slate-700">
-                        Get it on
-                      </div>
-                      <div className="font-bold text-slate-700">
-                        Google Play
-                      </div>
+                      <div className="font-semibold text-slate-700">iPhone Version</div>
+                      <div className="font-bold text-slate-700">In Development</div>
                     </div>
                   </div>
                 </div>
 
-                <div className="inline-flex items-center space-x-3 bg-breathing-blue/20 backdrop-blur-sm border border-breathing-blue/30 rounded-full px-6 py-3">
-                  <div className="w-3 h-3 bg-breathing-blue rounded-full animate-pulse"></div>
-                  <span className="text-stone font-medium">
-                    Currently in private beta • iOS & Android launch soon
-                  </span>
+                {/* Updated Status */}
+                <div className="space-y-3">
+                  <div className="inline-flex items-center space-x-3 bg-breathing-green/20 backdrop-blur-sm border border-breathing-green/30 rounded-full px-6 py-3">
+                    <div className="w-3 h-3 bg-breathing-green rounded-full animate-pulse"></div>
+                    <span className="text-stone font-medium">
+                      🤖 Android beta active • 📱 iOS coming Q2 2025
+                    </span>
+                  </div>
+                  
+                  <p className="text-slate-600 text-sm max-w-2xl mx-auto">
+                    Android users can access the beta now through our testing program. 
+                    iPhone users will be notified as soon as the iOS version is ready.
+                  </p>
                 </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Join the Journey */}
-        <section id="join" className="section-breathing">
-          <div className="container-contemplative max-w-2xl text-center">
-            <div className="card-stone p-8 md:p-12">
-              <div className="space-y-8">
-                <div className="space-y-4">
-                  <h2 className="text-4xl md:text-5xl font-semibold text-stone">
-                    Begin Your Recognition
-                  </h2>
-                  <p className="text-lg text-slate-600">
-                    Be among the first to experience technology that serves
-                    consciousness. Simple, contemplative updates when Selah
-                    becomes available.
-                  </p>
-                </div>
-
-                {/* App Store Previews */}
-                <div className="flex justify-center space-x-4 opacity-50">
-                  <div className="bg-slate-200 rounded-lg px-6 py-3 flex items-center space-x-2">
-                    <span className="text-2xl">📱</span>
-                    <div className="text-left">
-                      <div className="text-xs text-slate-500">Coming Soon</div>
-                      <div className="font-medium text-slate-700">
-                        App Store
-                      </div>
+        {/* Beta Testing Info - New Section */}
+        <section className="section-breathing">
+          <div className="container-contemplative max-w-4xl">
+            <div className="grid md:grid-cols-2 gap-8">
+              {/* Android Beta */}
+              <div className="card-stone p-8">
+                <div className="space-y-6">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-12 h-12 bg-breathing-green/20 rounded-lg flex items-center justify-center">
+                      <span className="text-2xl">🤖</span>
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-semibold text-stone">Android Beta</h3>
+                      <p className="text-breathing-green text-sm font-medium">Available Now</p>
                     </div>
                   </div>
-                  <div className="bg-slate-200 rounded-lg px-6 py-3 flex items-center space-x-2">
-                    <span className="text-2xl">🤖</span>
-                    <div className="text-left">
-                      <div className="text-xs text-slate-500">Coming Soon</div>
-                      <div className="font-medium text-slate-700">
-                        Google Play
-                      </div>
-                    </div>
+
+                  <div className="space-y-4">
+                    <p className="text-slate-700 leading-relaxed">
+                      Be among the first to experience contemplative technology. Beta testers get:
+                    </p>
+                    
+                    <ul className="space-y-2 text-slate-600">
+                      <li className="flex items-center space-x-2">
+                        <div className="w-1.5 h-1.5 bg-breathing-green rounded-full"></div>
+                        <span>Early access to all four chambers</span>
+                      </li>
+                      <li className="flex items-center space-x-2">
+                        <div className="w-1.5 h-1.5 bg-breathing-green rounded-full"></div>
+                        <span>Direct input on features and design</span>
+                      </li>
+                      <li className="flex items-center space-x-2">
+                        <div className="w-1.5 h-1.5 bg-breathing-green rounded-full"></div>
+                        <span>Priority support from our team</span>
+                      </li>
+                      <li className="flex items-center space-x-2">
+                        <div className="w-1.5 h-1.5 bg-breathing-green rounded-full"></div>
+                        <span>Free lifetime access to premium features</span>
+                      </li>
+                    </ul>
+
+                    <a
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        document.querySelector('input[type="email"]')?.focus();
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                      className="inline-flex items-center space-x-2 text-breathing-green hover:text-breathing-green/80 font-medium transition-colors"
+                    >
+                      <span>Join Android Beta →</span>
+                    </a>
                   </div>
                 </div>
+              </div>
 
-                {/* Email Form */}
-                <form
-                  className="space-y-4 max-w-md mx-auto"
-                  onSubmit={handleEmailSubmit}
-                >
-                  <input
-                    type="email"
-                    name="email"
-                    placeholder="your@email.com"
-                    className="input-contemplative text-center"
-                    required
-                  />
-                  <button
-                    type="submit"
-                    className="btn-breathing w-full py-4 text-lg"
-                  >
-                    Join the Contemplative Journey
-                  </button>
-                </form>
+              {/* iOS Coming Soon */}
+              <div className="card-stone p-8 opacity-75">
+                <div className="space-y-6">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-12 h-12 bg-breathing-blue/20 rounded-lg flex items-center justify-center">
+                      <span className="text-2xl">📱</span>
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-semibold text-stone">iPhone Version</h3>
+                      <p className="text-breathing-blue text-sm font-medium">Coming Soon</p>
+                    </div>
+                  </div>
 
-                <p className="text-sm text-slate-500">
-                  ✓ No optimization. No spam. Just contemplative technology,
-                  designed with reverence.
-                </p>
+                  <div className="space-y-4">
+                    <p className="text-slate-700 leading-relaxed">
+                      We're crafting the iPhone experience with the same contemplative care. Expected features:
+                    </p>
+                    
+                    <ul className="space-y-2 text-slate-600">
+                      <li className="flex items-center space-x-2">
+                        <div className="w-1.5 h-1.5 bg-breathing-blue rounded-full"></div>
+                        <span>Native iOS design language</span>
+                      </li>
+                      <li className="flex items-center space-x-2">
+                        <div className="w-1.5 h-1.5 bg-breathing-blue rounded-full"></div>
+                        <span>Enhanced haptic feedback for breathing</span>
+                      </li>
+                      <li className="flex items-center space-x-2">
+                        <div className="w-1.5 h-1.5 bg-breathing-blue rounded-full"></div>
+                        <span>Siri Shortcuts integration</span>
+                      </li>
+                      <li className="flex items-center space-x-2">
+                        <div className="w-1.5 h-1.5 bg-breathing-blue rounded-full"></div>
+                        <span>All chambers from day one</span>
+                      </li>
+                    </ul>
+
+                    <a
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        document.querySelector('input[type="email"]')?.focus();
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                      className="inline-flex items-center space-x-2 text-breathing-blue hover:text-breathing-blue/80 font-medium transition-colors"
+                    >
+                      <span>Get Notified for iPhone →</span>
+                    </a>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

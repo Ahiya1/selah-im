@@ -1,6 +1,6 @@
-// src/app/api/emails/route.ts - SELAH Email Collection API with Supabase
+// src/app/api/emails/route.ts - SELAH Email Collection API with Platform Tracking
 // Technology that breathes with you
-// Real email storage and validation using Supabase
+// Enhanced email storage and validation with platform preferences
 
 import { NextRequest, NextResponse } from "next/server";
 import { supabase, supabaseAdmin } from "../../../lib/supbase";
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // Check if email already exists
     const { data: existingEmail, error: checkError } = await supabase
       .from("emails")
-      .select("id, created_at")
+      .select("id, created_at, engagement_data")
       .eq("email", cleanEmail)
       .single();
 
@@ -42,22 +42,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         timestamp: new Date().toISOString(),
       };
       return NextResponse.json(errorResponse, { status: 500 });
-    }
-
-    if (existingEmail) {
-      const response: ApiResponse<EmailSubmission> = {
-        success: true,
-        data: {
-          id: existingEmail.id.toString(),
-          email: cleanEmail,
-          timestamp: existingEmail.created_at,
-          source,
-          validated: true,
-        },
-        message: "You're already on our contemplative journey",
-        timestamp: new Date().toISOString(),
-      };
-      return NextResponse.json(response, { status: 200 });
     }
 
     // Get additional context data
@@ -75,7 +59,83 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       source,
       context,
       timestamp: new Date().toISOString(),
+      // Enhanced tracking for platform preferences
+      platformPreference: context?.platformPreference || null,
+      location: context?.location || "unknown",
+      sessionMetrics: {
+        timeSpent: context?.sessionTime || 0,
+        breathInteractions: context?.breathInteractions || 0,
+        scrollDepth: context?.scrollDepth || 0,
+      },
+      // Track source context for better analytics
+      sourceContext: {
+        fromHero: source === "hero-section",
+        fromOrb: source === "orb-interaction",
+        fromChambers: source === "chambers-demo",
+        fromContract: source === "contract-section",
+      },
     };
+
+    if (existingEmail) {
+      // Update existing email with new context if platform preference changed
+      const existingContext = existingEmail.engagement_data || {};
+      const shouldUpdate =
+        context?.platformPreference &&
+        existingContext.platformPreference !== context.platformPreference;
+
+      if (shouldUpdate) {
+        const { error: updateError } = await supabase
+          .from("emails")
+          .update({
+            engagement_data: {
+              ...existingContext,
+              ...engagementData,
+              updateHistory: [
+                ...(existingContext.updateHistory || []),
+                {
+                  timestamp: new Date().toISOString(),
+                  source,
+                  platformPreference: context.platformPreference,
+                  location: context.location,
+                  action: "platform_preference_updated",
+                },
+              ],
+            },
+            updated_at: new Date().toISOString(),
+          })
+          .eq("email", cleanEmail);
+
+        if (updateError) {
+          console.error("Database update error:", updateError);
+        }
+      }
+
+      // Customize response based on platform preference and source
+      let message = "You're already on our contemplative journey";
+
+      if (context?.platformPreference === "android") {
+        message =
+          "🤖 You're set for Android beta access! Check your email soon.";
+      } else if (context?.platformPreference === "ios") {
+        message = "📱 You'll be notified when iPhone version is ready";
+      } else if (source === "hero-section") {
+        message = "Welcome back! You're already part of the journey.";
+      }
+
+      const response: ApiResponse<EmailSubmission> = {
+        success: true,
+        data: {
+          id: existingEmail.id.toString(),
+          email: cleanEmail,
+          timestamp: existingEmail.created_at,
+          source,
+          validated: true,
+        },
+        message,
+        timestamp: new Date().toISOString(),
+      };
+      return NextResponse.json(response, { status: 200 });
+    }
 
     // Insert new email
     const { data: newEmail, error: insertError } = await supabase
@@ -99,6 +159,22 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json(errorResponse, { status: 500 });
     }
 
+    // Customize success message based on platform preference and source
+    let successMessage = "Welcome to the contemplative journey";
+
+    if (context?.platformPreference === "android") {
+      successMessage =
+        "🤖 Welcome! Beta access details coming soon to your inbox";
+    } else if (context?.platformPreference === "ios") {
+      successMessage =
+        "📱 Welcome! You'll be first to know when iPhone version launches";
+    } else if (source === "hero-section") {
+      successMessage = "🧘 Welcome to your contemplative technology journey";
+    } else if (source === "orb-interaction") {
+      successMessage =
+        "✨ Thank you for breathing with us. Updates coming soon.";
+    }
+
     const response: ApiResponse<EmailSubmission> = {
       success: true,
       data: {
@@ -108,7 +184,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         source,
         validated: true,
       },
-      message: "Welcome to the contemplative journey",
+      message: successMessage,
       timestamp: new Date().toISOString(),
     };
 
@@ -159,9 +235,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "50");
     const source = searchParams.get("source");
+    const platform = searchParams.get("platform"); // New filter for platform preference
+    const location = searchParams.get("location"); // New filter for location context
     const offset = (page - 1) * limit;
 
-    // Build query
+    // Build query with enhanced filtering
     let query = supabaseAdmin
       .from("emails")
       .select("id, email, source, engagement_data, created_at", {
@@ -172,6 +250,18 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     if (source) {
       query = query.eq("source", source);
+    }
+
+    // Filter by platform preference if specified
+    if (platform) {
+      query = query.contains("engagement_data", {
+        platformPreference: platform,
+      });
+    }
+
+    // Filter by location context if specified
+    if (location) {
+      query = query.contains("engagement_data", { location: location });
     }
 
     const { data: emails, error, count } = await query;
@@ -198,6 +288,49 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       engagement: row.engagement_data,
     }));
 
+    // Calculate enhanced statistics
+    const platformStats = {
+      android: emails.filter(
+        (e) => e.engagement_data?.platformPreference === "android"
+      ).length,
+      ios: emails.filter((e) => e.engagement_data?.platformPreference === "ios")
+        .length,
+      unspecified: emails.filter((e) => !e.engagement_data?.platformPreference)
+        .length,
+    };
+
+    const sourceStats = {
+      "hero-section": emails.filter((e) => e.source === "hero-section").length,
+      "landing-page": emails.filter((e) => e.source === "landing-page").length,
+      "orb-interaction": emails.filter((e) => e.source === "orb-interaction")
+        .length,
+      "chambers-demo": emails.filter((e) => e.source === "chambers-demo")
+        .length,
+      "contract-section": emails.filter((e) => e.source === "contract-section")
+        .length,
+    };
+
+    const locationStats = {
+      hero: emails.filter((e) => e.engagement_data?.location === "hero").length,
+      bottom: emails.filter((e) => e.engagement_data?.location === "bottom")
+        .length,
+      unknown: emails.filter(
+        (e) =>
+          !e.engagement_data?.location ||
+          e.engagement_data?.location === "unknown"
+      ).length,
+    };
+
+    // Calculate conversion metrics
+    const totalInteractions = emails.reduce((sum, e) => {
+      return sum + (e.engagement_data?.sessionMetrics?.breathInteractions || 0);
+    }, 0);
+
+    const avgSessionTime =
+      emails.reduce((sum, e) => {
+        return sum + (e.engagement_data?.sessionMetrics?.timeSpent || 0);
+      }, 0) / Math.max(emails.length, 1);
+
     const response: ApiResponse = {
       success: true,
       data: {
@@ -209,6 +342,21 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           totalPages: Math.ceil(total / limit),
           hasNext: page * limit < total,
           hasPrev: page > 1,
+        },
+        analytics: {
+          platformStats,
+          sourceStats,
+          locationStats,
+          conversionMetrics: {
+            totalInteractions,
+            avgSessionTime: Math.round(avgSessionTime),
+            avgScrollDepth:
+              emails.reduce((sum, e) => {
+                return (
+                  sum + (e.engagement_data?.sessionMetrics?.scrollDepth || 0)
+                );
+              }, 0) / Math.max(emails.length, 1),
+          },
         },
       },
       message: "Emails retrieved successfully",
