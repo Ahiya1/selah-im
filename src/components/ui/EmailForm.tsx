@@ -17,6 +17,8 @@ const EmailForm: React.FC<EmailFormProps> = ({
   placeholder = "your@email.com",
   className = "",
   disabled = false,
+  platformPreference = null,
+  onPlatformChange,
 }) => {
   const [state, setState] = useState<EmailFormState>({
     email: "",
@@ -24,18 +26,24 @@ const EmailForm: React.FC<EmailFormProps> = ({
     isSubmitted: false,
     error: null,
     validationResult: null,
+    platformPreference: platformPreference || null,
   });
 
   const handleEmailChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       const email = event.target.value;
-      setState((prev) => ({ ...prev, email, error: null }));
+      const validationResult = validateEmail(email);
 
-      if (email) {
-        const validationResult = validateEmail(email);
-        setState((prev) => ({ ...prev, validationResult }));
-        onValidation?.(validationResult);
-      }
+      setState((prev) => ({
+        ...prev,
+        email,
+        error: validationResult.isValid
+          ? null
+          : validationResult.error || "Invalid email",
+        validationResult,
+      }));
+
+      onValidation?.(validationResult);
     },
     [onValidation]
   );
@@ -96,6 +104,7 @@ const EmailForm: React.FC<EmailFormProps> = ({
     modal: "space-y-6",
   };
 
+  // Simple success state for now
   if (state.isSubmitted) {
     return (
       <div className={`text-center space-y-4 ${className}`}>
@@ -128,7 +137,7 @@ const EmailForm: React.FC<EmailFormProps> = ({
           className={`
             input-contemplative
             ${variant === "default" ? "text-center" : ""}
-            ${state.validationResult?.isValid === false ? "border-red-300 focus:border-red-500" : ""}
+            ${state.error ? "border-red-300 focus:border-red-500" : ""}
             ${variant === "inline" ? "rounded-r-none" : ""}
           `}
           disabled={disabled || state.isSubmitting}

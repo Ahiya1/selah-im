@@ -43,6 +43,19 @@ export function calculateAnalyticsSummary(
       topSources: [],
       dailyStats: [],
       engagementTrends: [],
+      // Add the missing required properties
+      platformStats: {
+        android: 0,
+        ios: 0,
+        unspecified: 0,
+      },
+      sourceStats: {},
+      locationStats: {},
+      conversionMetrics: {
+        totalInteractions: 0,
+        avgSessionTime: 0,
+        avgScrollDepth: 0,
+      },
     };
   }
 
@@ -54,12 +67,40 @@ export function calculateAnalyticsSummary(
     0
   );
 
-  // Calculate top sources (placeholder)
+  // Calculate platform stats
+  const platformStats = {
+    android: engagements.filter((e) => e.platformPreference === "android")
+      .length,
+    ios: engagements.filter((e) => e.platformPreference === "ios").length,
+    unspecified: engagements.filter((e) => !e.platformPreference).length,
+  };
+
+  // Calculate source stats
   const sourceMap = new Map<string, number>();
   engagements.forEach((e) => {
-    // For now, just count sessions - will be enhanced with actual email source data
-    sourceMap.set("landing-page", (sourceMap.get("landing-page") || 0) + 1);
+    // Extract source from pageViews if available
+    const source = e.pageViews?.[0]?.path || "unknown";
+    sourceMap.set(source, (sourceMap.get(source) || 0) + 1);
   });
+
+  const sourceStats: Record<string, number> = {};
+  sourceMap.forEach((count, source) => {
+    sourceStats[source] = count;
+  });
+
+  // Calculate location stats
+  const locationStats = {
+    hero: engagements.filter((e) => e.location === "hero").length,
+    bottom: engagements.filter((e) => e.location === "bottom").length,
+    unknown: engagements.filter((e) => !e.location || e.location === "unknown")
+      .length,
+  };
+
+  // Calculate conversion metrics
+  const totalInteractions = totalOrbInteractions;
+  const avgSessionTime = averageTimeSpent;
+  const avgScrollDepth =
+    engagements.reduce((sum, e) => sum + e.maxScroll, 0) / totalSessions;
 
   const topSources = Array.from(sourceMap.entries()).map(([source, count]) => ({
     source: source as any, // Will be properly typed when email data is available
@@ -75,6 +116,14 @@ export function calculateAnalyticsSummary(
     topSources,
     dailyStats: [], // TODO: Group engagements by day
     engagementTrends: [], // TODO: Calculate trends over time
+    platformStats,
+    sourceStats,
+    locationStats,
+    conversionMetrics: {
+      totalInteractions,
+      avgSessionTime: Math.round(avgSessionTime),
+      avgScrollDepth: Math.round(avgScrollDepth),
+    },
   };
 }
 
