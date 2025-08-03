@@ -77,6 +77,19 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         topSources: [],
         dailyStats: [],
         engagementTrends: [],
+        // Add the missing required properties
+        platformStats: {
+          android: 0,
+          ios: 0,
+          unspecified: 0,
+        },
+        sourceStats: {},
+        locationStats: {},
+        conversionMetrics: {
+          totalInteractions: 0,
+          avgSessionTime: 0,
+          avgScrollDepth: 0,
+        },
       },
       exportData: {
         format: "json",
