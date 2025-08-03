@@ -3,7 +3,7 @@
 // Enhanced email storage and validation with platform preferences
 
 import { NextRequest, NextResponse } from "next/server";
-import { supabase, supabaseAdmin } from "../../../lib/supbase";
+import { supabaseAdmin } from "../../../lib/supbase";
 import type { EmailSubmission, ApiResponse } from "@/lib/types";
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
@@ -25,8 +25,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     const cleanEmail = email.trim().toLowerCase();
 
-    // Check if email already exists
-    const { data: existingEmail, error: checkError } = await supabase
+    // Check if email already exists - USE ADMIN CLIENT
+    const { data: existingEmail, error: checkError } = await supabaseAdmin
       .from("emails")
       .select("id, created_at, engagement_data")
       .eq("email", cleanEmail)
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         existingContext.platformPreference !== context.platformPreference;
 
       if (shouldUpdate) {
-        const { error: updateError } = await supabase
+        const { error: updateError } = await supabaseAdmin
           .from("emails")
           .update({
             engagement_data: {
@@ -137,8 +137,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json(response, { status: 200 });
     }
 
-    // Insert new email
-    const { data: newEmail, error: insertError } = await supabase
+    // Insert new email - USE ADMIN CLIENT
+    const { data: newEmail, error: insertError } = await supabaseAdmin
       .from("emails")
       .insert({
         email: cleanEmail,

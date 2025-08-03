@@ -3,7 +3,7 @@
 // Real feedback and inquiries from visitors using Supabase
 
 import { NextRequest, NextResponse } from "next/server";
-import { supabase, supabaseAdmin } from "../../../lib/supbase";
+import { supabaseAdmin } from "../../../lib/supbase";
 import type { ApiResponse } from "@/lib/types";
 
 interface FeedbackSubmission {
@@ -74,8 +74,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       timestamp: new Date().toISOString(),
     };
 
-    // Insert feedback into database
-    const { data: newFeedback, error: insertError } = await supabase
+    // Insert feedback into database - USE ADMIN CLIENT
+    const { data: newFeedback, error: insertError } = await supabaseAdmin
       .from("feedback")
       .insert({
         type,
@@ -283,7 +283,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json(errorResponse, { status: 400 });
     }
 
-    // Update feedback status
+    // Update feedback status - USE ADMIN CLIENT
     const { error: updateError } = await supabaseAdmin
       .from("feedback")
       .update({ status, updated_at: new Date().toISOString() })

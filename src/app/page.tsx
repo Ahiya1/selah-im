@@ -14,7 +14,9 @@ export default function SelahHomePage(): JSX.Element {
   const [currentChamber, setCurrentChamber] = useState<number>(0);
   const [isVisible, setIsVisible] = useState<boolean>(true);
   const [showFeedbackForm, setShowFeedbackForm] = useState<boolean>(false);
-  const [platformPreference, setPlatformPreference] = useState<'android' | 'ios' | null>(null);
+  const [platformPreference, setPlatformPreference] = useState<
+    "android" | "ios" | null
+  >(null);
   const sessionStartTime = useRef<number>(Date.now());
   const maxScrollRef = useRef<number>(0);
   const timeTrackerRef = useRef<NodeJS.Timeout | null>(null);
@@ -290,11 +292,12 @@ export default function SelahHomePage(): JSX.Element {
                       Begin Your Recognition
                     </h3>
                     <p className="text-slate-600 text-sm">
-                      Join the contemplative journey. Get early access and updates.
+                      Join the contemplative journey. Get early access and
+                      updates.
                     </p>
                   </div>
 
-                  {/* Platform Selection */}
+                  {/* Platform Selection - FIXED JSX STRUCTURE */}
                   <div className="space-y-3">
                     <p className="text-sm font-medium text-slate-700">
                       Which platform do you use?
@@ -302,34 +305,34 @@ export default function SelahHomePage(): JSX.Element {
                     <div className="flex space-x-3">
                       <button
                         type="button"
-                        onClick={() => setPlatformPreference('android')}
+                        onClick={() => setPlatformPreference("android")}
                         className={`flex-1 flex items-center justify-center space-x-2 px-4 py-3 rounded-lg border transition-all ${
-                          platformPreference === 'android'
-                            ? 'bg-breathing-green/20 border-breathing-green text-breathing-green'
-                            : 'bg-white/50 border-slate-200 text-slate-600 hover:bg-white/70'
+                          platformPreference === "android"
+                            ? "bg-breathing-green/20 border-breathing-green text-breathing-green"
+                            : "bg-white/50 border-slate-200 text-slate-600 hover:bg-white/70"
                         }`}
                       >
                         <span>🤖</span>
                         <span className="font-medium">Android</span>
-                        {platformPreference === 'android' && (
+                        {platformPreference === "android" && (
                           <span className="text-xs bg-breathing-green/30 px-2 py-1 rounded">
                             Beta Ready!
                           </span>
                         )}
                       </button>
-                      
+
                       <button
                         type="button"
-                        onClick={() => setPlatformPreference('ios')}
+                        onClick={() => setPlatformPreference("ios")}
                         className={`flex-1 flex items-center justify-center space-x-2 px-4 py-3 rounded-lg border transition-all ${
-                          platformPreference === 'ios'
-                            ? 'bg-breathing-blue/20 border-breathing-blue text-breathing-blue'
-                            : 'bg-white/50 border-slate-200 text-slate-600 hover:bg-white/70'
+                          platformPreference === "ios"
+                            ? "bg-breathing-blue/20 border-breathing-blue text-breathing-blue"
+                            : "bg-white/50 border-slate-200 text-slate-600 hover:bg-white/70"
                         }`}
                       >
                         <span>📱</span>
                         <span className="font-medium">iPhone</span>
-                        {platformPreference === 'ios' && (
+                        {platformPreference === "ios" && (
                           <span className="text-xs bg-breathing-blue/30 px-2 py-1 rounded">
                             Coming Soon
                           </span>
@@ -359,10 +362,11 @@ export default function SelahHomePage(): JSX.Element {
                             source: "hero-section",
                             context: {
                               sessionTime: sessionData?.timeSpent || 0,
-                              breathInteractions: sessionData?.breathInteractions || 0,
+                              breathInteractions:
+                                sessionData?.breathInteractions || 0,
                               scrollDepth: sessionData?.maxScroll || 0,
                               platformPreference: platformPreference,
-                              location: 'hero'
+                              location: "hero",
                             },
                           }),
                         });
@@ -381,13 +385,15 @@ export default function SelahHomePage(): JSX.Element {
 
                           if (submitButton && emailInput) {
                             const originalText = submitButton.textContent;
-                            
-                            if (platformPreference === 'android') {
-                              submitButton.textContent = "🎉 Beta access details coming soon!";
+
+                            if (platformPreference === "android") {
+                              submitButton.textContent =
+                                "🎉 Beta access details coming soon!";
                             } else {
-                              submitButton.textContent = result.message || "Welcome to the journey ✓";
+                              submitButton.textContent =
+                                result.message || "Welcome to the journey ✓";
                             }
-                            
+
                             submitButton.disabled = true;
                             emailInput.value = "";
 
@@ -397,8 +403,14 @@ export default function SelahHomePage(): JSX.Element {
                             }, 4000);
                           }
                         } else {
-                          console.error("Email submission failed:", result.message);
-                          alert(result.message || "Failed to submit email. Please try again.");
+                          console.error(
+                            "Email submission failed:",
+                            result.message
+                          );
+                          alert(
+                            result.message ||
+                              "Failed to submit email. Please try again."
+                          );
                         }
                       } catch (error) {
                         console.error("Email submission error:", error);
@@ -413,27 +425,28 @@ export default function SelahHomePage(): JSX.Element {
                       className="input-contemplative text-center"
                       required
                     />
-                    
+
                     <button
                       type="submit"
                       className="btn-breathing w-full py-3 text-base"
                     >
-                      {platformPreference === 'android' 
-                        ? '🤖 Get Android Beta Access' 
-                        : platformPreference === 'ios'
-                        ? '📱 Get Notified for iPhone Release'
-                        : 'Join the Contemplative Journey'
-                      }
+                      {platformPreference === "android"
+                        ? "🤖 Get Android Beta Access"
+                        : platformPreference === "ios"
+                          ? "📱 Get Notified for iPhone Release"
+                          : "Join the Contemplative Journey"}
                     </button>
                   </form>
 
                   <p className="text-xs text-slate-500 text-center">
                     ✓ No spam, ever. Just contemplative updates.
-                    {platformPreference === 'android' && (
-                      <br />
-                      <span className="text-breathing-green font-medium">
-                        Beta testers get priority access to new chambers.
-                      </span>
+                    {platformPreference === "android" && (
+                      <>
+                        <br />
+                        <span className="text-breathing-green font-medium">
+                          Beta testers get priority access to new chambers.
+                        </span>
+                      </>
                     )}
                   </p>
                 </div>
@@ -913,8 +926,9 @@ export default function SelahHomePage(): JSX.Element {
                   Your Contemplative Companion
                 </h2>
                 <p className="text-xl text-slate-600 max-w-3xl mx-auto">
-                  Now available for Android beta testing. Four chambers of consciousness
-                  exploration, designed for the moments when you need presence most.
+                  Now available for Android beta testing. Four chambers of
+                  consciousness exploration, designed for the moments when you
+                  need presence most.
                 </p>
               </div>
 
@@ -1028,19 +1042,25 @@ export default function SelahHomePage(): JSX.Element {
                   <div className="bg-gradient-to-r from-breathing-green to-breathing-blue rounded-lg px-8 py-4 flex items-center space-x-3 shadow-lg">
                     <span className="text-3xl">🤖</span>
                     <div className="text-left text-white">
-                      <div className="text-xs opacity-90">Beta Available Now</div>
+                      <div className="text-xs opacity-90">
+                        Beta Available Now
+                      </div>
                       <div className="font-semibold">Android Users</div>
                       <div className="font-bold">Join Beta Testing</div>
                     </div>
                   </div>
-                  
+
                   {/* iOS - Coming Soon */}
                   <div className="bg-slate-200 rounded-lg px-8 py-4 flex items-center space-x-3 opacity-60">
                     <span className="text-3xl">📱</span>
                     <div className="text-left">
                       <div className="text-xs text-slate-500">Coming Soon</div>
-                      <div className="font-semibold text-slate-700">iPhone Version</div>
-                      <div className="font-bold text-slate-700">In Development</div>
+                      <div className="font-semibold text-slate-700">
+                        iPhone Version
+                      </div>
+                      <div className="font-bold text-slate-700">
+                        In Development
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1053,10 +1073,11 @@ export default function SelahHomePage(): JSX.Element {
                       🤖 Android beta active • 📱 iOS coming Q2 2025
                     </span>
                   </div>
-                  
+
                   <p className="text-slate-600 text-sm max-w-2xl mx-auto">
-                    Android users can access the beta now through our testing program. 
-                    iPhone users will be notified as soon as the iOS version is ready.
+                    Android users can access the beta now through our testing
+                    program. iPhone users will be notified as soon as the iOS
+                    version is ready.
                   </p>
                 </div>
               </div>
@@ -1076,16 +1097,21 @@ export default function SelahHomePage(): JSX.Element {
                       <span className="text-2xl">🤖</span>
                     </div>
                     <div>
-                      <h3 className="text-xl font-semibold text-stone">Android Beta</h3>
-                      <p className="text-breathing-green text-sm font-medium">Available Now</p>
+                      <h3 className="text-xl font-semibold text-stone">
+                        Android Beta
+                      </h3>
+                      <p className="text-breathing-green text-sm font-medium">
+                        Available Now
+                      </p>
                     </div>
                   </div>
 
                   <div className="space-y-4">
                     <p className="text-slate-700 leading-relaxed">
-                      Be among the first to experience contemplative technology. Beta testers get:
+                      Be among the first to experience contemplative technology.
+                      Beta testers get:
                     </p>
-                    
+
                     <ul className="space-y-2 text-slate-600">
                       <li className="flex items-center space-x-2">
                         <div className="w-1.5 h-1.5 bg-breathing-green rounded-full"></div>
@@ -1109,8 +1135,11 @@ export default function SelahHomePage(): JSX.Element {
                       href="#"
                       onClick={(e) => {
                         e.preventDefault();
-                        document.querySelector('input[type="email"]')?.focus();
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        const emailInput = document.querySelector(
+                          'input[type="email"]'
+                        ) as HTMLInputElement;
+                        emailInput?.focus();
+                        window.scrollTo({ top: 0, behavior: "smooth" });
                       }}
                       className="inline-flex items-center space-x-2 text-breathing-green hover:text-breathing-green/80 font-medium transition-colors"
                     >
@@ -1128,16 +1157,21 @@ export default function SelahHomePage(): JSX.Element {
                       <span className="text-2xl">📱</span>
                     </div>
                     <div>
-                      <h3 className="text-xl font-semibold text-stone">iPhone Version</h3>
-                      <p className="text-breathing-blue text-sm font-medium">Coming Soon</p>
+                      <h3 className="text-xl font-semibold text-stone">
+                        iPhone Version
+                      </h3>
+                      <p className="text-breathing-blue text-sm font-medium">
+                        Coming Soon
+                      </p>
                     </div>
                   </div>
 
                   <div className="space-y-4">
                     <p className="text-slate-700 leading-relaxed">
-                      We're crafting the iPhone experience with the same contemplative care. Expected features:
+                      We're crafting the iPhone experience with the same
+                      contemplative care. Expected features:
                     </p>
-                    
+
                     <ul className="space-y-2 text-slate-600">
                       <li className="flex items-center space-x-2">
                         <div className="w-1.5 h-1.5 bg-breathing-blue rounded-full"></div>
@@ -1161,8 +1195,11 @@ export default function SelahHomePage(): JSX.Element {
                       href="#"
                       onClick={(e) => {
                         e.preventDefault();
-                        document.querySelector('input[type="email"]')?.focus();
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        const emailInput = document.querySelector(
+                          'input[type="email"]'
+                        ) as HTMLInputElement;
+                        emailInput?.focus();
+                        window.scrollTo({ top: 0, behavior: "smooth" });
                       }}
                       className="inline-flex items-center space-x-2 text-breathing-blue hover:text-breathing-blue/80 font-medium transition-colors"
                     >
